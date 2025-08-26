@@ -1,0 +1,32 @@
+{
+  "name": "@cathodique/wl-serv-high",
+  "version": "1.0.0",
+  "description": "High level wayland server",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cathodique/wl-serv-high.git"
+  },
+  "keywords": [
+    "wayland",
+    "server"
+  ],
+  "author": "Juliette Wang <immjs>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cathodique/wl-serv-high/issues"
+  },
+  "homepage": "https://github.com/cathodique/wl-serv-high#readme",
+  "dependencies": {
+    "@cathodique/mmap-io": "file:../mmap-io",
+    "@cathodique/usocket": "file:../usocket",
+    "@cathodique/wl-serv-low": "file:../wl-serv-low"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2"
+  }
+}
