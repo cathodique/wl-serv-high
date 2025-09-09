@@ -11,6 +11,7 @@ export declare class RegRectangle {
     h: number;
     constructor(type: InstructionType, y: number, x: number, h: number, w: number);
     hasCoordinate(y: number, x: number): boolean;
+    copyWithDelta(y: number, x: number): RegRectangle;
 }
 export declare class WlRegion extends BaseObject {
     instructions: RegRectangle[];

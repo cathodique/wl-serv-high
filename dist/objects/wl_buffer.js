@@ -14,6 +14,8 @@ class WlBuffer extends base_object_js_1.BaseObject {
     height;
     stride;
     format;
+    surface;
+    buffer;
     constructor(conx, args, ifaceName, oid, parent, version) {
         super(conx, args, ifaceName, oid, parent, version);
         if (this.parent.iface != "wl_shm_pool")
@@ -24,9 +26,13 @@ class WlBuffer extends base_object_js_1.BaseObject {
         this.height = args.height;
         this.stride = args.stride;
         this.format = args.format;
+        this.buffer = Buffer.alloc(this.size);
     }
-    wlRelease() {
+    wlDestroy() {
         this.parent.daughterBuffers.delete(this);
+        if (this.surface && this.surface.buffer.pending === this)
+            this.surface.buffer.pending = null;
+        super.wlDestroy();
     }
     get pixelSize() {
         return colorspaces_js_1.colorspaces[wl_serv_low_1.interfaces.wl_shm.enums.format.itoa[this.format]].bytesPerPixel;
@@ -34,12 +40,17 @@ class WlBuffer extends base_object_js_1.BaseObject {
     get size() {
         return Math.max(this.stride * (this.height - 1) + this.width * this.pixelSize, 0);
     }
-    getBuffer() {
-        return mmap_io_1.default.getbuffer(this.parent.bufferId);
+    // getBuffer() {
+    //   return mmap.getbuffer((this.parent as WlShmPool).bufferId);
+    // }
+    getBoundedRect(y, x, h, w) {
+        return [Math.min(h, this.height - y), Math.min(w, this.width - x)];
     }
-    getByte(i) {
-        // console.log((this.parent as WlShmPool).size);
-        return mmap_io_1.default.getbyte(this.parent.bufferId, i + this.offset);
+    getBufferArea(y, x, h, w) {
+        return mmap_io_1.default.getbufferarea(this.parent.bufferId, y, x, Math.min(h, this.height - y), Math.min(w, this.width - x), this.stride, this.pixelSize);
+    }
+    updateBufferArea(y, x, h, w) {
+        return mmap_io_1.default.updatebufferarea(this.parent.bufferId, this.buffer, y, x, Math.min(h, this.height - y), Math.min(w, this.width - x), this.stride, this.pixelSize);
     }
 }
 exports.WlBuffer = WlBuffer;

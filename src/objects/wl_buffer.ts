@@ -5,6 +5,7 @@ import { WlShmPool } from "./wl_shm_pool.js";
 import mmap from "@cathodique/mmap-io";
 import { interfaces } from "@cathodique/wl-serv-low";
 import type { ObjectReference } from "@cathodique/wl-serv-low";
+import { WlSurface } from "./wl_surface.js";
 
 export interface WlBufferMetadata {
 
@@ -17,6 +18,9 @@ export class WlBuffer extends BaseObject {
   stride: number;
   format: number;
 
+  surface?: WlSurface;
+  buffer: Buffer;
+
   constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: ObjectReference, version?: number) {
     super(conx, args, ifaceName, oid, parent, version);
 
@@ -28,10 +32,15 @@ export class WlBuffer extends BaseObject {
     this.height = args.height;
     this.stride = args.stride;
     this.format = args.format;
+
+    this.buffer = Buffer.alloc(this.size);
   }
 
-  wlRelease() {
+  wlDestroy() {
     (this.parent as WlShmPool).daughterBuffers.delete(this);
+    if (this.surface && this.surface.buffer.pending === this) this.surface.buffer.pending = null;
+
+    super.wlDestroy();
   }
 
   get pixelSize() {
@@ -43,12 +52,40 @@ export class WlBuffer extends BaseObject {
     return Math.max(this.stride * (this.height - 1) + this.width * this.pixelSize, 0);
   }
 
-  getBuffer() {
-    return mmap.getbuffer((this.parent as WlShmPool).bufferId);
+  // getBuffer() {
+  //   return mmap.getbuffer((this.parent as WlShmPool).bufferId);
+  // }
+
+  getBoundedRect(y: number, x: number, h: number, w: number) {
+    return [Math.min(h, this.height - y), Math.min(w, this.width - x)];
   }
 
-  getByte(i: number) {
-    // console.log((this.parent as WlShmPool).size);
-    return mmap.getbyte((this.parent as WlShmPool).bufferId, i + this.offset);
+  getBufferArea(y: number, x: number, h: number, w: number) {
+    return mmap.getbufferarea(
+      (this.parent as WlShmPool).bufferId,
+      y,
+      x,
+      Math.min(h, this.height - y),
+      Math.min(w, this.width - x),
+      this.stride,
+      this.pixelSize,
+    );
   }
+  updateBufferArea(y: number, x: number, h: number, w: number) {
+    return mmap.updatebufferarea(
+      (this.parent as WlShmPool).bufferId,
+      this.buffer,
+      y,
+      x,
+      Math.min(h, this.height - y),
+      Math.min(w, this.width - x),
+      this.stride,
+      this.pixelSize,
+    );
+  }
+
+  // getByte(i: number) {
+  //   // console.log((this.parent as WlShmPool).size);
+  //   return mmap.getbyte((this.parent as WlShmPool).bufferId, i + this.offset);
+  // }
 }

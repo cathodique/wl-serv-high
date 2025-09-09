@@ -1,26 +1,28 @@
-import { EventEmitter } from "node:stream";
 import { BaseObject } from "./base_object.js";
 import { EventClient, EventServer } from "../lib/event_clientserver.js";
-import { SpecificRegistry } from "../lib/specific_registry.js";
 import { WlSurface } from "./wl_surface.js";
-import { Connection, interfaces, ObjectReference } from "@cathodique/wl-serv-low";
+import { interfaces, ObjectReference } from "@cathodique/wl-serv-low";
 import { HLConnection } from "../index.js";
+import { ObjectAuthority } from "../lib/objectAuthority.js";
 
 const name = 'wl_output' as const;
 
-type OutputServerToClient = { 'update': [], 'enter': [WlSurface] };
-export type OutputEventServer = EventServer<OutputServerToClient, {}>;
-export type OutputEventClient = EventClient<{}, OutputServerToClient>;
-export class OutputRegistry extends SpecificRegistry<OutputConfiguration, OutputEventServer> {
-  get iface() { return name }
+// type OutputServerToClient = { 'update': [], 'enter': [WlSurface] };
+// export type OutputEventServer = EventServer<OutputServerToClient, {}>;
+// export type OutputEventClient = EventClient<{}, OutputServerToClient>;
+// export class OutputRegistry {
+//   get iface() { return name }
 
-  current: OutputConfiguration;
+//   current: OutputConfiguration;
 
-  constructor(v: OutputConfiguration[], current: OutputConfiguration = v[0]){
-    super(v);
-    this.current = current;
-  }
-}
+//   constructor(v: OutputConfiguration[], current: OutputConfiguration = v[0]){
+
+
+//     this.current = current;
+//   }
+// }
+
+export class OutputAuthority extends ObjectAuthority<WlOutput, OutputConfiguration> {}
 
 export interface OutputConfiguration {
   x: number;
@@ -33,22 +35,19 @@ export interface OutputConfiguration {
 
 export class WlOutput extends BaseObject {
   info: OutputConfiguration;
-  recipient: OutputEventClient;
+  authority: OutputAuthority;
 
   constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: ObjectReference, version?: number) {
     super(conx, args, ifaceName, oid, parent, version);
 
-    const outputReg = this.registry!.outputRegistry;
-    this.info = outputReg.map.get(args.name)!;
-
-    this.recipient = outputReg.transports.get(conx)!.get(this.info)!.createRecipient();
+    this.authority = this.registry!.outputAuthorities.get(args.name)!;
+    this.authority.bind(this);
+    this.info = this.authority.config;
 
     this.advertise();
-    this.recipient.on('update', this.advertise.bind(this));
-    this.recipient.on('enter', function (this: WlOutput, surf: WlSurface) {
-      surf.addCommand('enter', { output: this });
-      this.connection.sendPending();
-    }.bind(this));
+    // this.recipient.on('update', this.advertise.bind(this));
+    // this.recipient.on('enter', function (this: WlOutput, surf: WlSurface) {
+    // }.bind(this));
   }
 
   advertise() {
@@ -72,6 +71,4 @@ export class WlOutput extends BaseObject {
     this.addCommand('scale', { factor: 1 });
     this.addCommand('done', {});
   }
-
-  release() { this.recipient.destroy(); }
 }

@@ -5,6 +5,7 @@ import { XdgSurface } from "./xdg_surface.js";
 const name = 'xdg_toplevel' as const;
 export class XdgToplevel extends BaseObject {
   appId?: string;
+  title?: string;
 
   assocParent: XdgToplevel | null = null;
 
@@ -13,14 +14,22 @@ export class XdgToplevel extends BaseObject {
     super(conx, args, ifaceName, oid, parent, version);
 
     parent.role = this;
+    parent.surface.setRole("toplevel");
 
-    const config = this.registry!.outputRegistry.current;
+    // const config = this.registry!.;
+
+    // TODO: Let DE configure which output to use
+    const currentOutput = parent.surface.output || this.registry!.outputAuthorities.values().next().value!.config;
 
     // TODO: Retrieve that automatically (from config or sth idk)
-    this.addCommand('configureBounds', { width: config.effectiveW, height: config.effectiveH });
+    this.addCommand('configureBounds', { width: currentOutput.effectiveW, height: currentOutput.effectiveH });
     this.addCommand('wmCapabilities', { capabilities: Buffer.alloc(0) });
     this.addCommand('configure', { width: 0, height: 0, states: Buffer.alloc(0) });
     parent.addCommand('configure', { serial: parent.newSerial() });
+  }
+
+  wlSetTitle(args: { title: string }) {
+    this.title = args.title;
   }
 
   wlSetAppId(args: { appId: string }) {

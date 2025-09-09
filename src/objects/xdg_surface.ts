@@ -50,6 +50,4 @@ export class XdgSurface extends BaseObject {
   wlSetWindowGeometry(newGeom: { x: number, y: number, width: number, height: number }) {
     this.geometry.pending = newGeom;
   }
-
-  wlGetToplevel() { /* Self-fulfilling in xdg_toplevel */ }
 }

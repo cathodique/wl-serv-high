@@ -24,6 +24,9 @@ class RegRectangle {
         return this.x >= x && this.y >= y
             && x < this.w + this.x && y < this.h + this.y;
     }
+    copyWithDelta(y, x) {
+        return new RegRectangle(this.type, this.y + y, this.x + x, this.h, this.w);
+    }
 }
 exports.RegRectangle = RegRectangle;
 class WlRegion extends base_object_js_1.BaseObject {

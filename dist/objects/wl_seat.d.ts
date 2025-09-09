@@ -1,29 +1,26 @@
-import { EventClient, EventServer } from "../lib/event_clientserver.js";
 import { BaseObject } from "./base_object.js";
-import { SpecificRegistry } from "../lib/specific_registry";
-import { WlSurface } from "./wl_surface.js";
 import { HLConnection } from "../index.js";
+import { WlPointer } from "./wl_pointer.js";
+import { WlKeyboard } from "./wl_keyboard.js";
+import { ObjectAuthority } from "../lib/objectAuthority.js";
 export interface SeatConfiguration {
     name: string;
     capabilities: number;
 }
-type SeatServerToClient = {
-    'enter': [WlSurface, number, number];
-    'moveTo': [number, number];
-    'leave': [WlSurface];
-    'buttonDown': [number];
-    'buttonUp': [number];
-    'focus': [WlSurface];
-    'blur': [WlSurface];
-};
-export type SeatEventServer = EventServer<SeatServerToClient, {}>;
-export type SeatEventClient = EventClient<{}, SeatServerToClient>;
-export declare class SeatRegistry extends SpecificRegistry<SeatConfiguration, SeatEventServer> {
-    get iface(): "wl_seat";
+export declare class SeatAuthority extends ObjectAuthority<WlSeat, SeatConfiguration> {
 }
 export declare class WlSeat extends BaseObject {
     info: SeatConfiguration;
-    seatRegistry: SeatRegistry;
+    authority: SeatAuthority;
+    pointers: Set<WlPointer>;
+    keyboards: Set<WlKeyboard>;
     constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number);
+    wlGetPointer({ id: pointer }: {
+        id: WlPointer;
+    }): void;
+    wlGetKeyboard({ id: keyboard }: {
+        id: WlKeyboard;
+    }): void;
+    addCommandToPointers(eventName: string, args: Record<string, any>): void;
+    addCommandToKeyboards(eventName: string, args: Record<string, any>): void;
 }
-export {};

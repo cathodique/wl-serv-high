@@ -1,33 +1,35 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WlOutput = exports.OutputRegistry = void 0;
+exports.WlOutput = exports.OutputAuthority = void 0;
 const base_object_js_1 = require("./base_object.js");
-const specific_registry_js_1 = require("../lib/specific_registry.js");
 const wl_serv_low_1 = require("@cathodique/wl-serv-low");
+const objectAuthority_js_1 = require("../lib/objectAuthority.js");
 const name = 'wl_output';
-class OutputRegistry extends specific_registry_js_1.SpecificRegistry {
-    get iface() { return name; }
-    current;
-    constructor(v, current = v[0]) {
-        super(v);
-        this.current = current;
-    }
+// type OutputServerToClient = { 'update': [], 'enter': [WlSurface] };
+// export type OutputEventServer = EventServer<OutputServerToClient, {}>;
+// export type OutputEventClient = EventClient<{}, OutputServerToClient>;
+// export class OutputRegistry {
+//   get iface() { return name }
+//   current: OutputConfiguration;
+//   constructor(v: OutputConfiguration[], current: OutputConfiguration = v[0]){
+//     this.current = current;
+//   }
+// }
+class OutputAuthority extends objectAuthority_js_1.ObjectAuthority {
 }
-exports.OutputRegistry = OutputRegistry;
+exports.OutputAuthority = OutputAuthority;
 class WlOutput extends base_object_js_1.BaseObject {
     info;
-    recipient;
+    authority;
     constructor(conx, args, ifaceName, oid, parent, version) {
         super(conx, args, ifaceName, oid, parent, version);
-        const outputReg = this.registry.outputRegistry;
-        this.info = outputReg.map.get(args.name);
-        this.recipient = outputReg.transports.get(conx).get(this.info).createRecipient();
+        this.authority = this.registry.outputAuthorities.get(args.name);
+        this.authority.bind(this);
+        this.info = this.authority.config;
         this.advertise();
-        this.recipient.on('update', this.advertise.bind(this));
-        this.recipient.on('enter', function (surf) {
-            surf.addCommand('enter', { output: this });
-            this.connection.sendPending();
-        }.bind(this));
+        // this.recipient.on('update', this.advertise.bind(this));
+        // this.recipient.on('enter', function (this: WlOutput, surf: WlSurface) {
+        // }.bind(this));
     }
     advertise() {
         // TODO: FIX THIS MESS
@@ -50,6 +52,5 @@ class WlOutput extends base_object_js_1.BaseObject {
         this.addCommand('scale', { factor: 1 });
         this.addCommand('done', {});
     }
-    release() { this.recipient.destroy(); }
 }
 exports.WlOutput = WlOutput;

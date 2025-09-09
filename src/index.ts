@@ -6,8 +6,15 @@ import { newIdMap } from "./new_id_map";
 import { Time } from "./lib/time";
 import { BaseObject } from "./objects/base_object";
 import { TickAuthority } from "./lib/tickAuthority";
+import { SerialAuthority } from "./lib/serialAuthority";
 import { readdir } from "node:fs/promises";
 import { WlDisplay } from "./objects/wl_display";
+
+const getStackTrace = function() {
+  const obj: Record<string, string> = {};
+  Error.captureStackTrace(obj, getStackTrace);
+  return obj.stack;
+};
 
 export type ObjectMetadata = {
   wl_registry: WlRegistryMetadata;
@@ -66,6 +73,9 @@ export class HLConnection extends Connection<BaseObject> {
   // (I promise I tried.)
   get hlCompositor() { return this.compositor as unknown as HLCompositor }
 
+  display: WlDisplay;
+  serial: SerialAuthority = new SerialAuthority();
+
   constructor(
     connId: number,
     comp: HLCompositor,
@@ -75,7 +85,8 @@ export class HLConnection extends Connection<BaseObject> {
     super(connId, comp as unknown as Compositor<BaseObject, Connection<BaseObject>>, sock, params);
 
     // this.objects = new Map([[1, new WlDisplay(this, 1, null, {})]]);
-    this.createObject(this.createObjRef({}, 'wl_display', 1));
+    this.display = this.createObjRef({}, 'wl_display', 1) as WlDisplay;
+    this.createObject(this.display);
 
     // Handle client disconnect
     sock.on("end", function (this: HLConnection) {
@@ -85,7 +96,7 @@ export class HLConnection extends Connection<BaseObject> {
       }
     }.bind(this));
 
-    this.hlCompositor.metadata.wl_registry.outputs.addConnection(this);
-    this.hlCompositor.metadata.wl_registry.seats.addConnection(this);
+    // this.hlCompositor.metadata.wl_registry.outputs.addConnection(this);
+    // this.hlCompositor.metadata.wl_registry.seats.addConnection(this);
   }
 }

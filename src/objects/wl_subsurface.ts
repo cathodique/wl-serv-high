@@ -15,6 +15,8 @@ export class WlSubsurface extends BaseObject {
     this.isSynced = true;
     this.assocParent = args.parent;
     args.parent.daughterSurfaces.push(args.surface);
+
+    this.assocSurface.setRole("subsurface");
   }
 
   wlSetDesync() { this.isSynced = false }

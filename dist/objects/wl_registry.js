@@ -3,6 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WlRegistry = void 0;
 const wl_serv_low_1 = require("@cathodique/wl-serv-low");
 const base_object_js_1 = require("./base_object.js");
+const wl_output_js_1 = require("./wl_output.js");
+const wl_seat_js_1 = require("./wl_seat.js");
+// TODO: REFACTOR (WTF!!)
+// TODO contents:
+// These are supposed to be *global* objects
+// These are not supposed to be "one per connection"
+// Also removes the need for ../lib/specificregistry.ts
 class WlRegistry extends base_object_js_1.BaseObject {
     get registry() { return this; }
     static baseRegistry = [
@@ -19,16 +26,28 @@ class WlRegistry extends base_object_js_1.BaseObject {
         'wl_output',
     ];
     contents = [...WlRegistry.baseRegistry];
-    outputRegistry;
-    seatRegistry;
+    outputAuthorities = new Map();
+    outputAuthoritiesByConfig = new Map();
+    seatAuthorities = new Map();
+    seatAuthoritiesByConfig = new Map();
     constructor(conx, args, ifaceName, oid, parent, version) {
         // if (conx.registry) return conx.registry;
         super(conx, args, ifaceName, oid, parent, version);
         const regMeta = this.connection.hlCompositor.metadata.wl_registry;
-        regMeta.outputs.applyTo(this);
-        this.outputRegistry = regMeta.outputs;
-        regMeta.seats.applyTo(this);
-        this.seatRegistry = regMeta.seats;
+        for (const output of regMeta.outputs) {
+            const nextIdx = this.contents.length;
+            this.contents[nextIdx] = 'wl_output';
+            const outputAuth = new wl_output_js_1.OutputAuthority(output, nextIdx);
+            this.outputAuthorities.set(nextIdx, outputAuth);
+            this.outputAuthoritiesByConfig.set(output, outputAuth);
+        }
+        for (const seat of regMeta.seats) {
+            const nextIdx = this.contents.length;
+            this.contents[nextIdx] = 'wl_seat';
+            const seatAuth = new wl_seat_js_1.SeatAuthority(seat, nextIdx);
+            this.seatAuthorities.set(nextIdx, seatAuth);
+            this.seatAuthoritiesByConfig.set(seat, seatAuth);
+        }
         for (const numericName in this.contents) {
             const name = this.contents[numericName];
             if (!name)
@@ -37,7 +56,11 @@ class WlRegistry extends base_object_js_1.BaseObject {
             conx.addCommand(this, 'global', { name: numericName, interface: iface.name, version: iface.version });
         }
     }
-    wlBind() { }
-    wlGetRegistry() { }
+    // wlDestroy(): void {
+    //   const regMeta = this.connection.hlCompositor.metadata.wl_registry;
+    //   regMeta.outputs.unapplyTo(this);
+    //   regMeta.seats.unapplyTo(this);
+    // }
+    wlBind({ id }) { }
 }
 exports.WlRegistry = WlRegistry;

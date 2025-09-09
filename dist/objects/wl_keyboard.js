@@ -27,7 +27,15 @@ class KeyboardRegistry extends signalbound_js_1.Signalbound {
     async loadKeymapFd() {
         this.fileHandle = null;
         this.size = null;
-        const keymap = await fs_1.promises.readFile(`/usr/share/X11/xkb/symbols/${this.v.keymap}`);
+        // const keymap = await fsp.readFile(`/usr/share/X11/xkb/symbols/${this.v.keymap}`);
+        const keymap = Buffer.from(`
+      xkb_keymap {
+          xkb_keycodes  { include "evdev+aliases(qwerty)" };
+          xkb_types     { include "complete"      };
+          xkb_compat    { include "complete"      };
+          xkb_symbols   { include "pc+us+inet(evdev)+compose(caps)+terminate(ctrl_alt_bksp)"     };
+          xkb_geometry  { include "pc(pc104)"     };
+      };`);
         const newFile = posix_1.default.join(`${process.env.XDG_RUNTIME_DIR || `/tmp/${process.pid}/`}`, `keymap-${(0, crypto_1.randomUUID)()}`);
         await fs_1.promises.writeFile(newFile, Buffer.concat([keymap, Buffer.from([0x00])]));
         this.fileHandle = await fs_1.promises.open(newFile, 'r', 0o600);
@@ -37,7 +45,6 @@ class KeyboardRegistry extends signalbound_js_1.Signalbound {
 }
 exports.KeyboardRegistry = KeyboardRegistry;
 class WlKeyboard extends base_object_js_1.BaseObject {
-    recipient;
     meta;
     constructor(conx, args, ifaceName, oid, parent, version) {
         // if (conx.registry) return conx.registry;
@@ -45,29 +52,14 @@ class WlKeyboard extends base_object_js_1.BaseObject {
         this.meta = this.connection.hlCompositor.metadata.wl_keyboard;
         if (!(parent instanceof wl_seat_js_1.WlSeat))
             throw new Error('WlPointer needs to be initialized in the scope of a wl_seat');
-        // this.announceKeymap();
-        const seatRegistry = parent.seatRegistry;
-        this.recipient = seatRegistry.transports.get(conx).get(parent.info).createRecipient();
+        this.announceKeymap();
+        // const seatRegistry = parent.seatRegistry;
+        // this.recipient = seatRegistry.transports.get(conx)!.get(parent.info)!.createRecipient();
         // TODO: Make more customizable (?) => Dont hardcode
         this.addCommand('repeatInfo', {
             rate: 25,
             delay: 600,
         });
-        this.recipient.on('focus', (function (surf) {
-            this.addCommand('enter', {
-                serial: this.connection.time.getTime(),
-                surface: surf,
-                keys: Buffer.alloc(0),
-            });
-            this.connection.sendPending();
-        }).bind(this));
-        this.recipient.on('blur', (function (surf) {
-            this.addCommand('leave', {
-                serial: this.connection.time.getTime(),
-                surface: surf,
-            });
-            this.connection.sendPending();
-        }).bind(this));
     }
     async announceKeymap() {
         const keymapFd = await this.meta.keymapFd;
@@ -77,6 +69,9 @@ class WlKeyboard extends base_object_js_1.BaseObject {
             size: this.meta.size,
             fd: keymapFd,
         });
+    }
+    wlDestroy() {
+        // this.recipient.destroy();
     }
 }
 exports.WlKeyboard = WlKeyboard;

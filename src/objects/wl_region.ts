@@ -23,6 +23,10 @@ export class RegRectangle {
     return this.x >= x && this.y >= y
       && x < this.w + this.x && y < this.h + this.y;
   }
+
+  copyWithDelta(y: number, x: number) {
+    return new RegRectangle(this.type, this.y + y, this.x + x, this.h, this.w);
+  }
 }
 
 export class WlRegion extends BaseObject {

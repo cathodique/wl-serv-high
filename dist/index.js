@@ -5,7 +5,13 @@ const wl_serv_low_1 = require("@cathodique/wl-serv-low");
 const new_id_map_1 = require("./new_id_map");
 const time_1 = require("./lib/time");
 const tickAuthority_1 = require("./lib/tickAuthority");
+const serialAuthority_1 = require("./lib/serialAuthority");
 const promises_1 = require("node:fs/promises");
+const getStackTrace = function () {
+    const obj = {};
+    Error.captureStackTrace(obj, getStackTrace);
+    return obj.stack;
+};
 class HLCompositor extends wl_serv_low_1.Compositor {
     metadata;
     ticks = new tickAuthority_1.TickAuthority();
@@ -51,10 +57,13 @@ class HLConnection extends wl_serv_low_1.Connection {
     // Fucking hell.
     // (I promise I tried.)
     get hlCompositor() { return this.compositor; }
+    display;
+    serial = new serialAuthority_1.SerialAuthority();
     constructor(connId, comp, sock, params) {
         super(connId, comp, sock, params);
         // this.objects = new Map([[1, new WlDisplay(this, 1, null, {})]]);
-        this.createObject(this.createObjRef({}, 'wl_display', 1));
+        this.display = this.createObjRef({}, 'wl_display', 1);
+        this.createObject(this.display);
         // Handle client disconnect
         sock.on("end", function () {
             const deleteMe = [...this.objects.values()];
@@ -62,8 +71,8 @@ class HLConnection extends wl_serv_low_1.Connection {
                 deleteMe[i].wlDestroy();
             }
         }.bind(this));
-        this.hlCompositor.metadata.wl_registry.outputs.addConnection(this);
-        this.hlCompositor.metadata.wl_registry.seats.addConnection(this);
+        // this.hlCompositor.metadata.wl_registry.outputs.addConnection(this);
+        // this.hlCompositor.metadata.wl_registry.seats.addConnection(this);
     }
 }
 exports.HLConnection = HLConnection;

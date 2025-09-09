@@ -5,6 +5,8 @@ import { USocket } from "@cathodique/usocket";
 import { Time } from "./lib/time";
 import { BaseObject } from "./objects/base_object";
 import { TickAuthority } from "./lib/tickAuthority";
+import { SerialAuthority } from "./lib/serialAuthority";
+import { WlDisplay } from "./objects/wl_display";
 export type ObjectMetadata = {
     wl_registry: WlRegistryMetadata;
     wl_keyboard: WlKeyboardMetadata;
@@ -18,5 +20,7 @@ export declare class HLCompositor extends Compositor<BaseObject, HLConnection> {
 export declare class HLConnection extends Connection<BaseObject> {
     time: Time;
     get hlCompositor(): HLCompositor;
+    display: WlDisplay;
+    serial: SerialAuthority;
     constructor(connId: number, comp: HLCompositor, sock: USocket, params: ConnectionParams<BaseObject, HLConnection>);
 }
