@@ -21,8 +21,8 @@ class RegRectangle {
         this.w = w;
     }
     hasCoordinate(y, x) {
-        return this.x >= x && this.y >= y
-            && x < this.w + this.x && y < this.h + this.y;
+        return this.x <= x && this.y <= y
+            && this.w + this.x > x && this.h + this.y > y;
     }
     copyWithDelta(y, x) {
         return new RegRectangle(this.type, this.y + y, this.x + x, this.h, this.w);

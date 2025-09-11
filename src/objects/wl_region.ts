@@ -20,8 +20,8 @@ export class RegRectangle {
   }
 
   hasCoordinate(y: number, x: number) {
-    return this.x >= x && this.y >= y
-      && x < this.w + this.x && y < this.h + this.y;
+    return this.x <= x && this.y <= y
+      && this.w + this.x > x && this.h + this.y > y;
   }
 
   copyWithDelta(y: number, x: number) {
@@ -33,10 +33,10 @@ export class WlRegion extends BaseObject {
   instructions: RegRectangle[] = [];
 
   wlAdd(args: Record<string, any>) {
-    this.instructions.push(new RegRectangle(InstructionType.Add, args.y, args.x, args.h, args.w));
+    this.instructions.push(new RegRectangle(InstructionType.Add, args.y, args.x, args.height, args.width));
   }
 
   wlSubtract(args: Record<string, any>) {
-    this.instructions.push(new RegRectangle(InstructionType.Subtract, args.y, args.x, args.h, args.w));
+    this.instructions.push(new RegRectangle(InstructionType.Subtract, args.y, args.x, args.height, args.width));
   }
 }
