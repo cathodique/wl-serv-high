@@ -8,19 +8,32 @@ class XdgToplevel extends base_object_js_1.BaseObject {
     appId;
     title;
     assocParent = null;
+    lastDimensions = [0, 0];
     constructor(conx, args, ifaceName, oid, parent, version) {
         if (!(parent instanceof xdg_surface_js_1.XdgSurface))
             throw new Error('Parent must be xdg_surface');
         super(conx, args, ifaceName, oid, parent, version);
         parent.role = this;
+        parent.surface.setRole("toplevel");
         // const config = this.registry!.;
+        this.configureSequence(true, true);
+        parent.surface.on("wlCommit", function () {
+            const buf = parent.surface.buffer.current;
+            if (buf && !(buf.height === this.lastDimensions[0] && buf.width === this.lastDimensions[1])) {
+                this.configureSequence(true, false);
+                this.lastDimensions = [buf.height, buf.width];
+            }
+        }.bind(this));
+    }
+    configureSequence(window, capabilities) {
         // TODO: Let DE configure which output to use
-        const currentOutput = parent.surface.output || this.registry.outputAuthorities.values().next().value.config;
+        const maybeDefaultOutput = this.connection.display.outputAuthorities.values().next().value.config;
+        const currentOutput = this.parent.surface.output || maybeDefaultOutput;
         // TODO: Retrieve that automatically (from config or sth idk)
         this.addCommand('configureBounds', { width: currentOutput.effectiveW, height: currentOutput.effectiveH });
         this.addCommand('wmCapabilities', { capabilities: Buffer.alloc(0) });
-        this.addCommand('configure', { width: 0, height: 0, states: Buffer.alloc(0) });
-        parent.addCommand('configure', { serial: parent.newSerial() });
+        this.addCommand('configure', { width: this.lastDimensions[1], height: this.lastDimensions[0], states: Buffer.alloc(0) });
+        this.parent.addCommand('configure', { serial: this.parent.newSerial() });
     }
     wlSetTitle(args) {
         this.title = args.title;

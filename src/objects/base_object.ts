@@ -1,7 +1,6 @@
 import { interfaces, ObjectReference } from "@cathodique/wl-serv-low";
 import type { WlRegistry } from "./wl_registry";
 import { HLConnection } from "../index";
-import { newIdMap } from "../new_id_map";
 
 class ImplementationError extends Error {
 
@@ -19,6 +18,7 @@ export class BaseObject<T extends Record<string, any[]> | [never] = Record<strin
 
   wlDestroy() {
     this.connection.destroy(this.oid);
+    this.removeAllListeners();
   }
 
   toString() {

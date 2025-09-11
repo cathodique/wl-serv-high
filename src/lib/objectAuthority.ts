@@ -1,9 +1,7 @@
 export class ObjectAuthority<T, U> {
   config: U;
-  name: number;
-  constructor(config: U, name: number) {
+  constructor(config: U) {
     this.config = config;
-    this.name = name;
   }
 
   objects: Set<T> = new Set();

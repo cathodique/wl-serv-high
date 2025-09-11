@@ -11,10 +11,8 @@ export declare class WlRegistry extends BaseObject {
     static baseRegistry: (string | null)[];
     static supportedByRegistry: (string | null)[];
     contents: (string | null)[];
-    outputAuthorities: Map<number, OutputAuthority>;
-    outputAuthoritiesByConfig: Map<OutputConfiguration, OutputAuthority>;
-    seatAuthorities: Map<number, SeatAuthority>;
-    seatAuthoritiesByConfig: Map<SeatConfiguration, SeatAuthority>;
+    outputAuthoritiesByName: Map<number, OutputAuthority>;
+    seatAuthoritiesByName: Map<number, SeatAuthority>;
     constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number);
     wlBind({ id }: {
         id: BaseObject;

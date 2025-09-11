@@ -30,9 +30,9 @@ class HLCompositor extends wl_serv_low_1.Compositor {
                     },
                     call(object, fnName, args) {
                         const methodCollection = object;
-                        if (!(fnName in methodCollection))
-                            return;
-                        methodCollection[fnName](args);
+                        object.emit(`before${fnName[0].toUpperCase()}${fnName.slice(1)}`, args);
+                        if (fnName in methodCollection)
+                            methodCollection[fnName](args);
                         object.emit(fnName, args);
                     },
                 });

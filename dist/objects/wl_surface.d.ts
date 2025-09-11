@@ -29,16 +29,16 @@ interface OutputEvents extends Record<string, any[]> {
 type SurfaceEvents = KeyboardEvents & PointerEvents & OutputEvents & {
     updateRole: [SurfaceRoles];
 };
-type SurfaceRoles = "cursor" | "toplevel" | "popup";
+type SurfaceRoles = "cursor" | "toplevel" | "popup" | "subsurface";
 export declare class WlSurface extends BaseObject<SurfaceEvents> {
     xdgSurface: XdgSurface | null;
-    daughterSurfaces: WlSurface[];
+    daughterSurfaces: Set<WlSurface>;
     subsurface: WlSubsurface | null;
     opaqueRegions: DoubleBuffer<RegRectangle[]>;
     inputRegions: DoubleBuffer<RegRectangle[]>;
     surfaceDamage: DoubleBuffer<RegRectangle[]>;
     bufferDamage: DoubleBuffer<RegRectangle[]>;
-    buffer: DoubleBuffer<WlBuffer | null>;
+    buffer: DoubleBuffer<WlBuffer | null | undefined>;
     scale: DoubleBuffer<number>;
     offset: DoubleBuffer<[number, number]>;
     role?: SurfaceRoles;

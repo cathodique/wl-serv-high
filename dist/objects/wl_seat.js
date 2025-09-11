@@ -29,7 +29,7 @@ class WlSeat extends base_object_js_1.BaseObject {
     keyboards = new Set();
     constructor(conx, args, ifaceName, oid, parent, version) {
         super(conx, args, ifaceName, oid, parent, version);
-        this.authority = this.registry.seatAuthorities.get(args.name);
+        this.authority = this.registry.seatAuthoritiesByName.get(args.name);
         this.authority.bind(this);
         this.info = this.authority.config;
         this.addCommand('name', { name: this.info.name });

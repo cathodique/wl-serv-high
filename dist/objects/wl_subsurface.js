@@ -12,9 +12,18 @@ class WlSubsurface extends base_object_js_1.BaseObject {
         this.assocSurface.subsurface = this;
         this.isSynced = true;
         this.assocParent = args.parent;
-        args.parent.daughterSurfaces.push(args.surface);
+        args.parent.daughterSurfaces.add(args.surface);
+        this.assocSurface.setRole("subsurface");
     }
     wlSetDesync() { this.isSynced = false; }
     wlSetSync() { this.isSynced = true; }
+    getRelationWith(surf) {
+        if (this.assocSurface === surf)
+            return "parent";
+        if (this.assocParent.daughterSurfaces.has(surf))
+            return "sibling";
+        return "not_directly_related";
+    }
+    wlSetPosition(args) { console.log(args); }
 }
 exports.WlSubsurface = WlSubsurface;

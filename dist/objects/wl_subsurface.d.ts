@@ -1,6 +1,7 @@
 import { BaseObject } from "./base_object.js";
 import { WlSurface } from "./wl_surface.js";
 import { HLConnection } from "../index.js";
+type Relation = "parent" | "sibling" | "not_directly_related";
 export declare class WlSubsurface extends BaseObject {
     assocSurface: WlSurface;
     assocParent: WlSurface;
@@ -8,4 +9,10 @@ export declare class WlSubsurface extends BaseObject {
     constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number);
     wlSetDesync(): void;
     wlSetSync(): void;
+    getRelationWith(surf: WlSurface): Relation;
+    wlSetPosition(args: {
+        y: number;
+        x: number;
+    }): void;
 }
+export {};

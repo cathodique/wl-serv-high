@@ -40,7 +40,7 @@ export class WlOutput extends BaseObject {
   constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: ObjectReference, version?: number) {
     super(conx, args, ifaceName, oid, parent, version);
 
-    this.authority = this.registry!.outputAuthorities.get(args.name)!;
+    this.authority = this.registry!.outputAuthoritiesByName.get(args.name)!;
     this.authority.bind(this);
     this.info = this.authority.config;
 
@@ -66,7 +66,7 @@ export class WlOutput extends BaseObject {
       flags: 3, // idc i just wann move on
       width: this.info.w,
       height: this.info.h,
-      refresh: 60, // again idrc for now
+      refresh: 60000, // again idrc for now
     });
     this.addCommand('scale', { factor: 1 });
     this.addCommand('done', {});

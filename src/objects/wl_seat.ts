@@ -42,7 +42,7 @@ export class WlSeat extends BaseObject {
   constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number) {
     super(conx, args, ifaceName, oid, parent, version);
 
-    this.authority = this.registry!.seatAuthorities.get(args.name)!;
+    this.authority = this.registry!.seatAuthoritiesByName.get(args.name)!;
     this.authority.bind(this);
     this.info = this.authority.config;
 

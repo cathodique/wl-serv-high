@@ -33,6 +33,5 @@ class XdgSurface extends base_object_js_1.BaseObject {
     wlSetWindowGeometry(newGeom) {
         this.geometry.pending = newGeom;
     }
-    wlGetToplevel() { }
 }
 exports.XdgSurface = XdgSurface;

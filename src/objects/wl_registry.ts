@@ -35,32 +35,23 @@ export class WlRegistry extends BaseObject {
 
   contents: (string | null)[] = [...WlRegistry.baseRegistry];
 
-  outputAuthorities: Map<number, OutputAuthority> = new Map();
-  outputAuthoritiesByConfig: Map<OutputConfiguration, OutputAuthority> = new Map();
-
-  seatAuthorities: Map<number, SeatAuthority> = new Map();
-  seatAuthoritiesByConfig: Map<SeatConfiguration, SeatAuthority> = new Map();
+  outputAuthoritiesByName: Map<number, OutputAuthority> = new Map();
+  seatAuthoritiesByName: Map<number, SeatAuthority> = new Map();
 
   constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number) {
     // if (conx.registry) return conx.registry;
     super(conx, args, ifaceName, oid, parent, version);
 
-    const regMeta = this.connection.hlCompositor.metadata.wl_registry;
-
-    for (const output of regMeta.outputs) {
+    for (const outputAuth of this.connection.display.outputAuthorities.values()) {
       const nextIdx = this.contents.length;
       this.contents[nextIdx] = 'wl_output';
-      const outputAuth = new OutputAuthority(output, nextIdx);
-      this.outputAuthorities.set(nextIdx, outputAuth);
-      this.outputAuthoritiesByConfig.set(output, outputAuth);
+      this.outputAuthoritiesByName.set(nextIdx, outputAuth);
     }
 
-    for (const seat of regMeta.seats) {
+    for (const seatAuth of this.connection.display.seatAuthorities.values()) {
       const nextIdx = this.contents.length;
       this.contents[nextIdx] = 'wl_seat';
-      const seatAuth = new SeatAuthority(seat, nextIdx);
-      this.seatAuthorities.set(nextIdx, seatAuth);
-      this.seatAuthoritiesByConfig.set(seat, seatAuth);
+      this.seatAuthoritiesByName.set(nextIdx, seatAuth);
     }
 
     for (const numericName in this.contents) {

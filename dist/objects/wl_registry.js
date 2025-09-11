@@ -3,8 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WlRegistry = void 0;
 const wl_serv_low_1 = require("@cathodique/wl-serv-low");
 const base_object_js_1 = require("./base_object.js");
-const wl_output_js_1 = require("./wl_output.js");
-const wl_seat_js_1 = require("./wl_seat.js");
 // TODO: REFACTOR (WTF!!)
 // TODO contents:
 // These are supposed to be *global* objects
@@ -26,27 +24,20 @@ class WlRegistry extends base_object_js_1.BaseObject {
         'wl_output',
     ];
     contents = [...WlRegistry.baseRegistry];
-    outputAuthorities = new Map();
-    outputAuthoritiesByConfig = new Map();
-    seatAuthorities = new Map();
-    seatAuthoritiesByConfig = new Map();
+    outputAuthoritiesByName = new Map();
+    seatAuthoritiesByName = new Map();
     constructor(conx, args, ifaceName, oid, parent, version) {
         // if (conx.registry) return conx.registry;
         super(conx, args, ifaceName, oid, parent, version);
-        const regMeta = this.connection.hlCompositor.metadata.wl_registry;
-        for (const output of regMeta.outputs) {
+        for (const outputAuth of this.connection.display.outputAuthorities.values()) {
             const nextIdx = this.contents.length;
             this.contents[nextIdx] = 'wl_output';
-            const outputAuth = new wl_output_js_1.OutputAuthority(output, nextIdx);
-            this.outputAuthorities.set(nextIdx, outputAuth);
-            this.outputAuthoritiesByConfig.set(output, outputAuth);
+            this.outputAuthoritiesByName.set(nextIdx, outputAuth);
         }
-        for (const seat of regMeta.seats) {
+        for (const seatAuth of this.connection.display.seatAuthorities.values()) {
             const nextIdx = this.contents.length;
             this.contents[nextIdx] = 'wl_seat';
-            const seatAuth = new wl_seat_js_1.SeatAuthority(seat, nextIdx);
-            this.seatAuthorities.set(nextIdx, seatAuth);
-            this.seatAuthoritiesByConfig.set(seat, seatAuth);
+            this.seatAuthoritiesByName.set(nextIdx, seatAuth);
         }
         for (const numericName in this.contents) {
             const name = this.contents[numericName];

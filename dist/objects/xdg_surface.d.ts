@@ -28,6 +28,5 @@ export declare class XdgSurface extends BaseObject {
         width: number;
         height: number;
     }): void;
-    wlGetToplevel(): void;
 }
 export {};

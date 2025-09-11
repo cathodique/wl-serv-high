@@ -7,13 +7,13 @@ const doublebuffer_js_1 = require("../lib/doublebuffer.js");
 const wl_serv_low_1 = require("@cathodique/wl-serv-low");
 class WlSurface extends base_object_js_1.BaseObject {
     xdgSurface = null;
-    daughterSurfaces = [];
+    daughterSurfaces = new Set();
     subsurface = null;
     opaqueRegions = new doublebuffer_js_1.DoubleBuffer([]);
     inputRegions = new doublebuffer_js_1.DoubleBuffer([]);
     surfaceDamage = new doublebuffer_js_1.DoubleBuffer([]);
     bufferDamage = new doublebuffer_js_1.DoubleBuffer([]);
-    buffer = new doublebuffer_js_1.DoubleBuffer(null);
+    buffer = new doublebuffer_js_1.DoubleBuffer(undefined);
     scale = new doublebuffer_js_1.DoubleBuffer(1);
     offset = new doublebuffer_js_1.DoubleBuffer([0, 0]);
     role;
@@ -27,13 +27,18 @@ class WlSurface extends base_object_js_1.BaseObject {
         this.handleMouse();
         this.handleKeyboard();
         this.handleOutput();
+        const dataDevices = this.connection.instances.get('wl_data_device');
+        dataDevices?.forEach(function (dataDevice) {
+            this.on('shown', dataDevice.surfaceFocusCallback.bind(dataDevice));
+        }.bind(this));
     }
     handleMouse() {
         this.on('enter', (function (seatConf, surfX, surfY) {
-            const seatAuth = this.registry.seatAuthoritiesByConfig.get(seatConf);
+            const seatAuth = this.connection.display.seatAuthorities.get(seatConf);
+            const enterSerial = this.connection.serial.next();
             seatAuth.forAll(function (wlSeat) {
                 wlSeat.addCommandToPointers('enter', {
-                    serial: this.connection.serial.next(),
+                    serial: enterSerial,
                     surface: this,
                     surfaceX: surfX,
                     surfaceY: surfY,
@@ -49,7 +54,7 @@ class WlSurface extends base_object_js_1.BaseObject {
             this.connection.sendPending();
         }).bind(this));
         this.on('moveTo', (function (seatConf, surfX, surfY) {
-            const seatAuth = this.registry.seatAuthoritiesByConfig.get(seatConf);
+            const seatAuth = this.connection.display.seatAuthorities.get(seatConf);
             seatAuth.forAll(function (wlSeat) {
                 wlSeat.addCommandToPointers('motion', {
                     time: this.connection.time.getTime(),
@@ -61,7 +66,7 @@ class WlSurface extends base_object_js_1.BaseObject {
             this.connection.sendPending();
         }).bind(this));
         this.on('leave', (function (seatConf) {
-            const seatAuth = this.registry.seatAuthoritiesByConfig.get(seatConf);
+            const seatAuth = this.connection.display.seatAuthorities.get(seatConf);
             seatAuth.forAll(function (wlSeat) {
                 wlSeat.addCommandToPointers('leave', {
                     serial: this.connection.serial.next(),
@@ -72,7 +77,7 @@ class WlSurface extends base_object_js_1.BaseObject {
             this.connection.sendPending();
         }).bind(this));
         this.on('buttonDown', (function (seatConf, button) {
-            const seatAuth = this.registry.seatAuthoritiesByConfig.get(seatConf);
+            const seatAuth = this.connection.display.seatAuthorities.get(seatConf);
             seatAuth.forAll(function (wlSeat) {
                 wlSeat.addCommandToPointers('button', {
                     serial: this.connection.serial.next(),
@@ -85,7 +90,7 @@ class WlSurface extends base_object_js_1.BaseObject {
             this.connection.sendPending();
         }).bind(this));
         this.on('buttonUp', (function (seatConf, button) {
-            const seatAuth = this.registry.seatAuthoritiesByConfig.get(seatConf);
+            const seatAuth = this.connection.display.seatAuthorities.get(seatConf);
             seatAuth.forAll(function (wlSeat) {
                 wlSeat.addCommandToPointers('button', {
                     serial: this.connection.serial.next(),
@@ -101,7 +106,7 @@ class WlSurface extends base_object_js_1.BaseObject {
     output = null;
     handleOutput() {
         this.on('shown', function (output) {
-            const outputAuth = this.registry.outputAuthoritiesByConfig.get(output);
+            const outputAuth = this.connection.display.outputAuthorities.get(output);
             this.output = output;
             outputAuth.forAll(function (wlOutput) {
                 this.addCommand('enter', { output: wlOutput });
@@ -110,20 +115,22 @@ class WlSurface extends base_object_js_1.BaseObject {
         }.bind(this));
     }
     handleKeyboard() {
-        this.on('modifiers', (function (seatConf, keysDown) {
-            const seatAuth = this.registry.seatAuthoritiesByConfig.get(seatConf);
+        this.on('modifiers', (function (seatConf, dep, latch, lock, group) {
+            const seatAuth = this.connection.display.seatAuthorities.get(seatConf);
             seatAuth.forAll(function (wlSeat) {
-                throw new Error('Not implemented');
+                // throw new Error('Not implemented');
                 wlSeat.addCommandToKeyboards('modifiers', {
-                    serial: this.connection.time.getTime(),
-                    surface: this,
-                    keys: Buffer.from(keysDown),
+                    serial: this.connection.serial.currentSerial,
+                    modsDepressed: dep,
+                    modsLatched: latch,
+                    modsLocked: lock,
+                    group: group,
                 });
             }.bind(this));
             this.connection.sendPending();
         }).bind(this));
         this.on('focus', (function (seatConf, keysDown) {
-            const seatAuth = this.registry.seatAuthoritiesByConfig.get(seatConf);
+            const seatAuth = this.connection.display.seatAuthorities.get(seatConf);
             seatAuth.forAll(function (wlSeat) {
                 wlSeat.addCommandToKeyboards('enter', {
                     serial: this.connection.time.getTime(),
@@ -134,7 +141,7 @@ class WlSurface extends base_object_js_1.BaseObject {
             this.connection.sendPending();
         }).bind(this));
         this.on('blur', (function (seatConf) {
-            const seatAuth = this.registry.seatAuthoritiesByConfig.get(seatConf);
+            const seatAuth = this.connection.display.seatAuthorities.get(seatConf);
             seatAuth.forAll(function (wlSeat) {
                 wlSeat.addCommandToKeyboards('leave', {
                     serial: this.connection.time.getTime(),
@@ -144,7 +151,7 @@ class WlSurface extends base_object_js_1.BaseObject {
             this.connection.sendPending();
         }).bind(this));
         this.on('keyDown', (function (seatConf, keyDown, isRepeat) {
-            const seatAuth = this.registry.seatAuthoritiesByConfig.get(seatConf);
+            const seatAuth = this.connection.display.seatAuthorities.get(seatConf);
             const keyStateEnum = wl_serv_low_1.interfaces.wl_keyboard.enums.keyState.atoi;
             seatAuth.forAll(function (wlSeat) {
                 wlSeat.addCommandToKeyboards('key', {
@@ -157,7 +164,7 @@ class WlSurface extends base_object_js_1.BaseObject {
             this.connection.sendPending();
         }).bind(this));
         this.on('keyUp', (function (seatConf, keyUp) {
-            const seatAuth = this.registry.seatAuthoritiesByConfig.get(seatConf);
+            const seatAuth = this.connection.display.seatAuthorities.get(seatConf);
             seatAuth.forAll(function (wlSeat) {
                 wlSeat.addCommandToKeyboards('key', {
                     serial: this.connection.serial.next(),
@@ -203,7 +210,7 @@ class WlSurface extends base_object_js_1.BaseObject {
         }
         this.bufferDamage.pending = [];
         this.surfaceDamage.pending = [];
-        this.buffer.pending = null;
+        this.buffer.pending = undefined;
         if (!this.subsurface)
             this.applyCache();
         if (this.subsurface && !this.subsurface.isSynced)

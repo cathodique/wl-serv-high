@@ -10,6 +10,8 @@ export class WlDataDevice extends BaseObject {
   seat: WlSeat;
   // recipient: SeatEventClient;
 
+  onDestroy: (() => void)[] = [];
+
   constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: ObjectReference, version?: number) {
     super(conx, args, ifaceName, oid, parent, version);
     this.seat = args.seat;
@@ -19,15 +21,22 @@ export class WlDataDevice extends BaseObject {
     this.connection.instances.get('wl_surface')?.forEach(function (this: WlDataDevice, v: BaseObject) {
       const surf = v as WlSurface;
 
-      surf.on('focus', function (this: WlDataDevice, kbd: WlKeyboard) {
-        const newOid = this.connection.createServerOid();
-        this.addCommand('dataOffer', { id: { oid: newOid } });
+      const cb = this.surfaceFocusCallback.bind(this);
 
-        const newKidOid = conx.createObjRef({ mimeType: 'text/plain;charset=utf-8', [fromServer]: true }, 'wl_data_offer', newOid, this);
-        conx.createObject(newKidOid);
-        this.addCommand('selection', { id: null });
-      }.bind(this));
+      surf.on('shown', cb);
 
+      this.onDestroy.push(() => {
+        surf.off('shown', cb);
+      });
     }.bind(this));
+  }
+
+  surfaceFocusCallback (kbd: WlKeyboard) {
+    const newOid = this.connection.createServerOid();
+    this.addCommand('dataOffer', { id: { oid: newOid } });
+
+    const newKidOid = this.connection.createObjRef({ mimeType: 'text/plain;charset=utf-8', [fromServer]: true }, 'wl_data_offer', newOid, this);
+    this.connection.createObject(newKidOid);
+    this.addCommand('selection', { id: newKidOid });
   }
 }

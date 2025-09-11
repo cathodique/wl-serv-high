@@ -23,7 +23,7 @@ class WlOutput extends base_object_js_1.BaseObject {
     authority;
     constructor(conx, args, ifaceName, oid, parent, version) {
         super(conx, args, ifaceName, oid, parent, version);
-        this.authority = this.registry.outputAuthorities.get(args.name);
+        this.authority = this.registry.outputAuthoritiesByName.get(args.name);
         this.authority.bind(this);
         this.info = this.authority.config;
         this.advertise();
@@ -47,7 +47,7 @@ class WlOutput extends base_object_js_1.BaseObject {
             flags: 3, // idc i just wann move on
             width: this.info.w,
             height: this.info.h,
-            refresh: 60, // again idrc for now
+            refresh: 60000, // again idrc for now
         });
         this.addCommand('scale', { factor: 1 });
         this.addCommand('done', {});

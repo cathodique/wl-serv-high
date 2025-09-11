@@ -4,7 +4,9 @@ export declare class XdgToplevel extends BaseObject {
     appId?: string;
     title?: string;
     assocParent: XdgToplevel | null;
+    lastDimensions: [number, number];
     constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number);
+    configureSequence(window: boolean, capabilities: boolean): void;
     wlSetTitle(args: {
         title: string;
     }): void;

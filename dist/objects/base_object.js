@@ -13,6 +13,7 @@ class BaseObject extends wl_serv_low_1.ObjectReference {
     }
     wlDestroy() {
         this.connection.destroy(this.oid);
+        this.removeAllListeners();
     }
     toString() {
         return `[wlObject ${this.iface}]`;
