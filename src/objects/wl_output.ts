@@ -1,11 +1,7 @@
 import { BaseObject } from "./base_object.js";
-import { EventClient, EventServer } from "../lib/event_clientserver.js";
-import { WlSurface } from "./wl_surface.js";
 import { interfaces, ObjectReference } from "@cathodique/wl-serv-low";
 import { HLConnection } from "../index.js";
 import { ObjectAuthority } from "../lib/objectAuthority.js";
-
-const name = 'wl_output' as const;
 
 // type OutputServerToClient = { 'update': [], 'enter': [WlSurface] };
 // export type OutputEventServer = EventServer<OutputServerToClient, {}>;

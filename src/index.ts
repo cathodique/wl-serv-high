@@ -84,7 +84,6 @@ export class HLConnection extends Connection<BaseObject> {
   ) {
     super(connId, comp as unknown as Compositor<BaseObject, Connection<BaseObject>>, sock, params);
 
-    // this.objects = new Map([[1, new WlDisplay(this, 1, null, {})]]);
     this.display = this.createObjRef({}, 'wl_display', 1) as WlDisplay;
     this.createObject(this.display);
 
@@ -95,8 +94,5 @@ export class HLConnection extends Connection<BaseObject> {
         deleteMe[i].wlDestroy();
       }
     }.bind(this));
-
-    // this.hlCompositor.metadata.wl_registry.outputs.addConnection(this);
-    // this.hlCompositor.metadata.wl_registry.seats.addConnection(this);
   }
 }

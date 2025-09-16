@@ -15,8 +15,4 @@ export class WlPointer extends BaseObject {
   wlSetCursor({ surface }: { surface: WlSurface }) {
     surface.setRole("cursor");
   }
-
-  // wlDestroy(): void {
-  //   this.recipient.onDestroy.forEach((v) => v());
-  // }
 }

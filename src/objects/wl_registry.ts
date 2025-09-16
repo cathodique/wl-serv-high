@@ -10,10 +10,6 @@ export interface WlRegistryMetadata {
 }
 
 // TODO: REFACTOR (WTF!!)
-// TODO contents:
-// These are supposed to be *global* objects
-// These are not supposed to be "one per connection"
-// Also removes the need for ../lib/specificregistry.ts
 
 export class WlRegistry extends BaseObject {
   get registry() { return this; }

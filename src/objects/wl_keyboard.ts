@@ -10,7 +10,6 @@ import { WlSeat } from "./wl_seat.js";
 import { randomUUID } from "crypto";
 import { interfaces, ObjectReference } from "@cathodique/wl-serv-low";
 import { HLConnection } from "../index.js";
-// import mmap from "@cathodique/mmap-io";
 
 type KeyboardServerToClient = { 'edit_keymap': [] };
 export type KeyboardEventServer = EventServer<KeyboardServerToClient, {}>;

@@ -12,15 +12,11 @@ export class XdgPopup extends BaseObject {
     parent.role = this;
     parent.surface.setRole("popup");
 
-    // const config = this.registry!.outputRegistry.current;
-    // if (!config) throw new Error('Could not fetch outputRegistry - Did you instantiate wl_output before wl_registry?');
-
     // TODO: Retrieve that automatically (from positioner or sth idk)
     this.addCommand('configure', { width: 600, height: 600, x: 0, y: 0 });
     parent.addCommand('configure', { serial: parent.newSerial() });
   }
   get renderReady() {
-    // Check if the top-level has been set-up enough to be render-ready
     return true;
   }
 }

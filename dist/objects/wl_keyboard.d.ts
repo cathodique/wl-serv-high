@@ -23,7 +23,7 @@ export declare class KeyboardRegistry extends Signalbound<KeyboardConfiguration,
     keymapFd: Promise<number>;
     fileHandle: FileHandle | null;
     size: number | null;
-    recipient: EventClient<{}, KeyboardServerToClient>;
+    recipient: any;
     constructor(v: KeyboardConfiguration);
     loadKeymapFd(): Promise<number>;
 }

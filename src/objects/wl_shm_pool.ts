@@ -3,7 +3,6 @@ import { BaseObject } from "./base_object.js";
 import { WlBuffer } from "./wl_buffer.js";
 import { HLConnection } from "../index.js";
 
-const name = 'wl_shm_pool' as const;
 export class WlShmPool extends BaseObject {
   size: number;
   fd: number;

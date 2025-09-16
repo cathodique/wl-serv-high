@@ -21,13 +21,9 @@ export class XdgToplevel extends BaseObject {
     parent.role = this;
     parent.surface.setRole("toplevel");
 
-    // const config = this.registry!.;
-
     this.configureSequence(true, true);
     parent.surface.on("wlCommit", function (this: XdgToplevel) {
-      // const buf = parent.surface.buffer.current;
       if (!(parent.geometry.current.height === this.lastDimensions[0] && parent.geometry.current.width === this.lastDimensions[1])) {
-        // console.log(this.lastDimensions, [buf.height, buf.width]);
         this.lastDimensions = [parent.geometry.current.height, parent.geometry.current.width];
         this.configureSequence(true, false);
       }

@@ -4,7 +4,6 @@ exports.WlOutput = exports.OutputAuthority = void 0;
 const base_object_js_1 = require("./base_object.js");
 const wl_serv_low_1 = require("@cathodique/wl-serv-low");
 const objectAuthority_js_1 = require("../lib/objectAuthority.js");
-const name = 'wl_output';
 // type OutputServerToClient = { 'update': [], 'enter': [WlSurface] };
 // export type OutputEventServer = EventServer<OutputServerToClient, {}>;
 // export type OutputEventClient = EventClient<{}, OutputServerToClient>;

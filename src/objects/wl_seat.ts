@@ -1,6 +1,4 @@
-// import { EventClient, EventServer } from "../lib/event_clientserver.js";
 import { BaseObject } from "./base_object.js";
-// import { SpecificRegistry } from "../lib/specific_registry";
 import { HLConnection } from "../index.js";
 import { WlPointer } from "./wl_pointer.js";
 import { WlKeyboard } from "./wl_keyboard.js";

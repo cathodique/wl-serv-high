@@ -27,7 +27,6 @@ interface FromTo {
   to: [number, number];
 }
 
-const name = 'xdg_positioner' as const;
 export class XdgPositioner extends BaseObject {
   size?: [number, number]; // YX
   wlSetSize({ height, width }: { height: number, width: number }) {

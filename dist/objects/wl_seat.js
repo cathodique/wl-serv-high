@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WlSeat = exports.SeatAuthority = void 0;
-// import { EventClient, EventServer } from "../lib/event_clientserver.js";
 const base_object_js_1 = require("./base_object.js");
 const objectAuthority_js_1 = require("../lib/objectAuthority.js");
 const wl_serv_low_1 = require("@cathodique/wl-serv-low");
