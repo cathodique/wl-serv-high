@@ -5,11 +5,11 @@ import { WlSurface } from "./wl_surface.js";
 import { XdgPopup } from "./xdg_popup.js";
 import { XdgToplevel } from "./xdg_toplevel.js";
 
-interface WindowGeometry {
-  x: number | null;
-  y: number | null;
-  width: number | null;
-  height: number | null;
+export interface WindowGeometry {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 export class XdgSurface extends BaseObject {
@@ -19,7 +19,7 @@ export class XdgSurface extends BaseObject {
   lastConfigureSerial = 0;
   wasLastConfigureAcked = true;
 
-  geometry: DoubleBuffer<WindowGeometry> = new DoubleBuffer({ x: null, y: null, width: null, height: null });
+  geometry: DoubleBuffer<WindowGeometry> = new DoubleBuffer({ x: 0, y: 0, width: 0, height: 0 }, this);
 
   constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number) {
     super(conx, args, ifaceName, oid, parent, version);

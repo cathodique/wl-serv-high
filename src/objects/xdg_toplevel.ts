@@ -1,6 +1,7 @@
 import { HLConnection } from "../index.js";
 import { BaseObject } from "./base_object.js";
 import { XdgSurface } from "./xdg_surface.js";
+import { ZxdgDecorationManagerV1 } from "./zxdg_decoration_manager_v1.js";
 
 const name = 'xdg_toplevel' as const;
 export class XdgToplevel extends BaseObject {
@@ -10,6 +11,8 @@ export class XdgToplevel extends BaseObject {
   assocParent: XdgToplevel | null = null;
 
   lastDimensions: [number, number] = [0, 0];
+
+  decoration?: ZxdgDecorationManagerV1;
 
   constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number) {
     if (!(parent instanceof XdgSurface)) throw new Error('Parent must be xdg_surface');
@@ -22,10 +25,11 @@ export class XdgToplevel extends BaseObject {
 
     this.configureSequence(true, true);
     parent.surface.on("wlCommit", function (this: XdgToplevel) {
-      const buf = parent.surface.buffer.current;
-      if (buf && !(buf.height === this.lastDimensions[0] && buf.width === this.lastDimensions[1])) {
+      // const buf = parent.surface.buffer.current;
+      if (!(parent.geometry.current.height === this.lastDimensions[0] && parent.geometry.current.width === this.lastDimensions[1])) {
+        // console.log(this.lastDimensions, [buf.height, buf.width]);
+        this.lastDimensions = [parent.geometry.current.height, parent.geometry.current.width];
         this.configureSequence(true, false);
-        this.lastDimensions = [buf.height, buf.width];
       }
     }.bind(this));
   }
@@ -33,7 +37,7 @@ export class XdgToplevel extends BaseObject {
   configureSequence(window: boolean, capabilities: boolean) {
     // TODO: Let DE configure which output to use
     const maybeDefaultOutput = this.connection.display.outputAuthorities.values().next().value!.config;
-    const currentOutput = (this.parent as XdgSurface).surface.output || maybeDefaultOutput;
+    const currentOutput = (this.parent as XdgSurface).surface.outputs.values().next().value?.config || maybeDefaultOutput;
 
     // TODO: Retrieve that automatically (from config or sth idk)
     this.addCommand('configureBounds', { width: currentOutput.effectiveW, height: currentOutput.effectiveH });

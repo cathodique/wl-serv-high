@@ -1,7 +1,11 @@
+import { HLConnection } from "..";
+
 export class ObjectAuthority<T, U> {
   config: U;
-  constructor(config: U) {
+  connection: HLConnection;
+  constructor(config: U, conx: HLConnection) {
     this.config = config;
+    this.connection = conx;
   }
 
   objects: Set<T> = new Set();

@@ -32,10 +32,10 @@ exports.RegRectangle = RegRectangle;
 class WlRegion extends base_object_js_1.BaseObject {
     instructions = [];
     wlAdd(args) {
-        this.instructions.push(new RegRectangle(InstructionType.Add, args.y, args.x, args.h, args.w));
+        this.instructions.push(new RegRectangle(InstructionType.Add, args.y, args.x, args.height, args.width));
     }
     wlSubtract(args) {
-        this.instructions.push(new RegRectangle(InstructionType.Subtract, args.y, args.x, args.h, args.w));
+        this.instructions.push(new RegRectangle(InstructionType.Subtract, args.y, args.x, args.height, args.width));
     }
 }
 exports.WlRegion = WlRegion;

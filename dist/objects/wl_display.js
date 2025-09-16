@@ -12,11 +12,11 @@ class WlDisplay extends base_object_js_1.BaseObject {
         super(conx, args, ifaceName, oid, parent, version);
         const regMeta = this.connection.hlCompositor.metadata.wl_registry;
         for (const output of regMeta.outputs) {
-            const outputAuth = new wl_output_js_1.OutputAuthority(output);
+            const outputAuth = new wl_output_js_1.OutputAuthority(output, this.connection);
             this.outputAuthorities.set(output, outputAuth);
         }
         for (const seat of regMeta.seats) {
-            const seatAuth = new wl_seat_js_1.SeatAuthority(seat);
+            const seatAuth = new wl_seat_js_1.SeatAuthority(seat, this.connection);
             this.seatAuthorities.set(seat, seatAuth);
         }
     }

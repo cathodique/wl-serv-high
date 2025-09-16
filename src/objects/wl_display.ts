@@ -17,12 +17,12 @@ export class WlDisplay extends BaseObject {
     const regMeta = this.connection.hlCompositor.metadata.wl_registry;
 
     for (const output of regMeta.outputs) {
-      const outputAuth = new OutputAuthority(output);
+      const outputAuth = new OutputAuthority(output, this.connection);
       this.outputAuthorities.set(output, outputAuth);
     }
 
     for (const seat of regMeta.seats) {
-      const seatAuth = new SeatAuthority(seat);
+      const seatAuth = new SeatAuthority(seat, this.connection);
       this.seatAuthorities.set(seat, seatAuth);
     }
   }

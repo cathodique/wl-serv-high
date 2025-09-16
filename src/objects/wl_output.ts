@@ -22,7 +22,8 @@ const name = 'wl_output' as const;
 //   }
 // }
 
-export class OutputAuthority extends ObjectAuthority<WlOutput, OutputConfiguration> {}
+export class OutputAuthority extends ObjectAuthority<WlOutput, OutputConfiguration> {
+}
 
 export interface OutputConfiguration {
   x: number;

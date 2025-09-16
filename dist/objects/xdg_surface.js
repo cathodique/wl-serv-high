@@ -8,7 +8,7 @@ class XdgSurface extends base_object_js_1.BaseObject {
     role = null;
     lastConfigureSerial = 0;
     wasLastConfigureAcked = true;
-    geometry = new doublebuffer_js_1.DoubleBuffer({ x: null, y: null, width: null, height: null });
+    geometry = new doublebuffer_js_1.DoubleBuffer({ x: 0, y: 0, width: 0, height: 0 }, this);
     constructor(conx, args, ifaceName, oid, parent, version) {
         super(conx, args, ifaceName, oid, parent, version);
         this.surface = args.surface;

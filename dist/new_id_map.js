@@ -24,6 +24,7 @@ const xdg_positioner_1 = require("./objects/xdg_positioner");
 const xdg_surface_1 = require("./objects/xdg_surface");
 const xdg_toplevel_1 = require("./objects/xdg_toplevel");
 const xdg_wm_base_1 = require("./objects/xdg_wm_base");
+const zxdg_decoration_manager_v1_1 = require("./objects/zxdg_decoration_manager_v1");
 exports.newIdMap = {
     wl_buffer: wl_buffer_1.WlBuffer,
     wl_display: wl_display_1.WlDisplay,
@@ -48,4 +49,6 @@ exports.newIdMap = {
     xdg_surface: xdg_surface_1.XdgSurface,
     xdg_toplevel: xdg_toplevel_1.XdgToplevel,
     wl_region: wl_region_1.WlRegion,
+    zxdg_decoration_manager_v1: zxdg_decoration_manager_v1_1.ZxdgDecorationManagerV1,
+    zxdg_toplevel_decoration_v1: zxdg_decoration_manager_v1_1.ZxdgToplevelDecorationV1,
 };

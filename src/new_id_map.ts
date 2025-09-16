@@ -21,6 +21,7 @@ import { XdgPositioner } from "./objects/xdg_positioner";
 import { XdgSurface } from "./objects/xdg_surface";
 import { XdgToplevel } from "./objects/xdg_toplevel";
 import { XdgWmBase } from "./objects/xdg_wm_base";
+import { ZxdgDecorationManagerV1, ZxdgToplevelDecorationV1 } from "./objects/zxdg_decoration_manager_v1";
 
 export const newIdMap = {
   wl_buffer: WlBuffer,
@@ -46,4 +47,6 @@ export const newIdMap = {
   xdg_surface: XdgSurface,
   xdg_toplevel: XdgToplevel,
   wl_region: WlRegion,
+  zxdg_decoration_manager_v1: ZxdgDecorationManagerV1,
+  zxdg_toplevel_decoration_v1: ZxdgToplevelDecorationV1,
 } as const;

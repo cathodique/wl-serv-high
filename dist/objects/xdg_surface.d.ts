@@ -4,11 +4,11 @@ import { BaseObject } from "./base_object.js";
 import { WlSurface } from "./wl_surface.js";
 import { XdgPopup } from "./xdg_popup.js";
 import { XdgToplevel } from "./xdg_toplevel.js";
-interface WindowGeometry {
-    x: number | null;
-    y: number | null;
-    width: number | null;
-    height: number | null;
+export interface WindowGeometry {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
 }
 export declare class XdgSurface extends BaseObject {
     surface: WlSurface;
@@ -29,4 +29,3 @@ export declare class XdgSurface extends BaseObject {
         height: number;
     }): void;
 }
-export {};

@@ -9,6 +9,7 @@ class XdgToplevel extends base_object_js_1.BaseObject {
     title;
     assocParent = null;
     lastDimensions = [0, 0];
+    decoration;
     constructor(conx, args, ifaceName, oid, parent, version) {
         if (!(parent instanceof xdg_surface_js_1.XdgSurface))
             throw new Error('Parent must be xdg_surface');
@@ -18,17 +19,18 @@ class XdgToplevel extends base_object_js_1.BaseObject {
         // const config = this.registry!.;
         this.configureSequence(true, true);
         parent.surface.on("wlCommit", function () {
-            const buf = parent.surface.buffer.current;
-            if (buf && !(buf.height === this.lastDimensions[0] && buf.width === this.lastDimensions[1])) {
+            // const buf = parent.surface.buffer.current;
+            if (!(parent.geometry.current.height === this.lastDimensions[0] && parent.geometry.current.width === this.lastDimensions[1])) {
+                // console.log(this.lastDimensions, [buf.height, buf.width]);
+                this.lastDimensions = [parent.geometry.current.height, parent.geometry.current.width];
                 this.configureSequence(true, false);
-                this.lastDimensions = [buf.height, buf.width];
             }
         }.bind(this));
     }
     configureSequence(window, capabilities) {
         // TODO: Let DE configure which output to use
         const maybeDefaultOutput = this.connection.display.outputAuthorities.values().next().value.config;
-        const currentOutput = this.parent.surface.output || maybeDefaultOutput;
+        const currentOutput = this.parent.surface.outputs.values().next().value?.config || maybeDefaultOutput;
         // TODO: Retrieve that automatically (from config or sth idk)
         this.addCommand('configureBounds', { width: currentOutput.effectiveW, height: currentOutput.effectiveH });
         this.addCommand('wmCapabilities', { capabilities: Buffer.alloc(0) });

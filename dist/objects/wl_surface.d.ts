@@ -7,7 +7,7 @@ import { DoubleBuffer } from "../lib/doublebuffer.js";
 import { XdgSurface } from "./xdg_surface.js";
 import { HLConnection } from "../index.js";
 import { ObjectReference } from "@cathodique/wl-serv-low";
-import { OutputConfiguration } from "./wl_output.js";
+import { OutputAuthority, OutputConfiguration } from "./wl_output.js";
 import { SeatConfiguration } from "./wl_seat.js";
 interface KeyboardEvents extends Record<string, any[]> {
     keyDown: [SeatConfiguration, number];
@@ -45,10 +45,8 @@ export declare class WlSurface extends BaseObject<SurfaceEvents> {
     setRole(role: SurfaceRoles): void;
     doubleBufferedState: Set<DoubleBuffer<any>>;
     constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: ObjectReference, version?: number);
-    handleMouse(): void;
-    output: OutputConfiguration | null;
-    handleOutput(): void;
-    handleKeyboard(): void;
+    outputs: Set<OutputAuthority>;
+    shown(output: OutputConfiguration): void;
     wlSetOpaqueRegion(args: {
         region: WlRegion;
     }): void;
