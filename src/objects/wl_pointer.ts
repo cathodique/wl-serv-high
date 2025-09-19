@@ -6,6 +6,8 @@ import { HLConnection } from "../index.js";
 
 
 export class WlPointer extends BaseObject {
+  currentSurface?: WlSurface;
+
   constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: ObjectReference, version?: number) {
     super(conx, args, ifaceName, oid, parent, version);
 
@@ -13,6 +15,8 @@ export class WlPointer extends BaseObject {
   }
 
   wlSetCursor({ surface }: { surface: WlSurface }) {
-    surface.setRole("cursor");
+    if (surface) surface.setRole("cursor");
+    else if (this.currentSurface) this.currentSurface.dropRole();
+    this.currentSurface = surface;
   }
 }

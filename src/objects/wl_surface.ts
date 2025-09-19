@@ -47,9 +47,16 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
   offset: DoubleBuffer<[number, number]> = new DoubleBuffer([0, 0], this);
 
   role?: SurfaceRoles;
+  roleActive: boolean = false;
   setRole(role: SurfaceRoles) {
+    // TODO: Error here if surface already has role
     this.role = role;
+    this.roleActive = true;
     this.emit("updateRole");
+  }
+  dropRole() {
+    this.roleActive = false;
+    this.emit("dropRole");
   }
   doubleBufferedState: Set<DoubleBuffer<any>> = new Set([this.opaqueRegions, this.inputRegions, this.buffer, this.scale, this.surfaceDamage, this.bufferDamage, this.offset]);
 

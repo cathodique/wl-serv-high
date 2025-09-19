@@ -21,6 +21,7 @@ export class WlRegistry extends BaseObject {
     'wl_subcompositor',
     'xdg_wm_base',
     'wl_data_device_manager',
+    'zxdg_decoration_manager_v1',
   ]
 
   static supportedByRegistry = [

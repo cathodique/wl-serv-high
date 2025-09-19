@@ -17,7 +17,10 @@ export class XdgSurface extends BaseObject {
   role: XdgToplevel | XdgPopup | null = null;
 
   lastConfigureSerial = 0;
-  wasLastConfigureAcked = true;
+  // wasLastConfigureAcked = true;
+  pendingSerials = new Set();
+
+  // globalCoords =
 
   geometry: DoubleBuffer<WindowGeometry> = new DoubleBuffer({ x: 0, y: 0, width: 0, height: 0 }, this);
 
@@ -36,15 +39,14 @@ export class XdgSurface extends BaseObject {
 
   newSerial() {
     this.lastConfigureSerial += 1;
-    this.wasLastConfigureAcked = false;
+    this.pendingSerials.add(this.lastConfigureSerial);
     return this.lastConfigureSerial;
   }
 
   wlAckConfigure({ serial }: { serial: number }) {
-    if (serial !== this.lastConfigureSerial) throw new Error('Serials do not match');
-    if (this.wasLastConfigureAcked) throw new Error('Last configure was already acked');
+    if (!this.pendingSerials.has(serial)) throw this.raiseError('invalid_method', 'Last configure was already acked, or idk wtf ur talking about');
 
-    this.wasLastConfigureAcked = true;
+    this.pendingSerials.delete(serial);
   }
 
   wlSetWindowGeometry(newGeom: { x: number, y: number, width: number, height: number }) {
