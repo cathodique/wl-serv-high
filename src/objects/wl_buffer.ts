@@ -20,12 +20,15 @@ export class WlBuffer extends BaseObject {
 
   surface?: WlSurface;
   buffer: Buffer;
+  parent: WlShmPool;
 
   constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: ObjectReference, version?: number) {
     super(conx, args, ifaceName, oid, parent, version);
 
-    if (this.parent.iface != "wl_shm_pool") throw new Error('wl_buffer must only be created using wl_shm_pool.create_buffer');
-    (this.parent as WlShmPool).daughterBuffers.add(this);
+    if (!(parent instanceof WlShmPool)) throw new Error('wl_buffer must only be created using wl_shm_pool.create_buffer');
+    this.parent = parent;
+
+    this.parent.daughterBuffers.add(this);
 
     this.offset = args.offset;
     this.width = args.width;
@@ -37,7 +40,7 @@ export class WlBuffer extends BaseObject {
   }
 
   wlDestroy() {
-    (this.parent as WlShmPool).daughterBuffers.delete(this);
+    this.parent.daughterBuffers.delete(this);
     if (this.surface && this.surface.buffer.pending === this) this.surface.buffer.pending = null;
 
     super.wlDestroy();
@@ -62,7 +65,7 @@ export class WlBuffer extends BaseObject {
 
   getBufferArea(y: number, x: number, h: number, w: number) {
     return mmap.getbufferarea(
-      (this.parent as WlShmPool).bufferId,
+      this.parent.bufferId,
       y,
       x,
       Math.min(h, this.height - y),
@@ -73,7 +76,7 @@ export class WlBuffer extends BaseObject {
   }
   updateBufferArea(y: number, x: number, h: number, w: number) {
     return mmap.updatebufferarea(
-      (this.parent as WlShmPool).bufferId,
+      this.parent.bufferId,
       this.buffer,
       y,
       x,

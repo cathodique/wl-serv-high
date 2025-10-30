@@ -10,9 +10,14 @@ export class BaseObject<T extends Record<string, any[]> | [never] = Record<strin
   process() {}
 
   connection: HLConnection;
+  parent: BaseObject;
 
   constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, newOid: number, parent?: ObjectReference<any>, version?: number) {
     super(ifaceName, newOid, parent, version);
+
+    if (parent && !(parent instanceof BaseObject)) throw new Error("Parent of BaseObject must be BaseObject");
+    this.parent = parent || this;
+
     this.connection = conx;
   }
 
@@ -31,7 +36,7 @@ export class BaseObject<T extends Record<string, any[]> | [never] = Record<strin
 
   get registry(): WlRegistry | undefined {
     if (this.parent === this) return undefined;
-    return (this.parent as BaseObject).registry;
+    return this.parent.registry;
   }
 
   raiseError(errorName: string, description?: string) {

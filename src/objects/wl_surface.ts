@@ -65,6 +65,7 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
   }
 
   outputs: Set<OutputAuthority> = new Set();
+  currentOutput?: OutputAuthority;
   shown(output: OutputConfiguration) {
     const outputAuth = this.connection.display.outputAuthorities.get(output)!;
     this.outputs.add(outputAuth);

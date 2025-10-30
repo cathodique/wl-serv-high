@@ -1,12 +1,44 @@
+import { interfaces, ObjectReference } from "@cathodique/wl-serv-low";
 import { HLConnection } from "../index.js";
 import { BaseObject } from "./base_object.js";
 import { XdgSurface } from "./xdg_surface.js";
 import { ZxdgDecorationManagerV1 } from "./zxdg_decoration_manager_v1.js";
+import { EventEmitter } from "node:stream";
 
-const name = 'xdg_toplevel' as const;
+const anyValue = <T>(s: Set<T> | Map<any, T>): T | undefined => s.values().next().value;
+
+type PossibleStates = "maximized" | "fullscreen" | "resizing" | "activated"
+  | "tiled_left" | "tiled_right" | "tiled_top" | "tiled_bottom"
+  | "suspended"
+  | "constrained_left" | "constrained_right" | "constrained_top" | "constrained_bottom";
+
+class EventfulSet<T> extends Set<T> {
+  event: EventEmitter = new EventEmitter();
+
+  add(v: T): this {
+    super.add(v);
+    this.event.emit('change');
+    return this;
+  }
+  delete(v: T): boolean {
+    const result = super.delete(v);
+    this.event.emit('change');
+    return result;
+  }
+  clear(): void {
+    if (this.size != 0) {
+      super.clear();
+      this.event.emit('change');
+    }
+  }
+}
+
 export class XdgToplevel extends BaseObject {
   appId?: string;
   title?: string;
+  activated: boolean = false;
+
+  parent: XdgSurface;
 
   assocParent: XdgToplevel | null = null;
 
@@ -14,9 +46,12 @@ export class XdgToplevel extends BaseObject {
 
   decoration?: ZxdgDecorationManagerV1;
 
+  readonly states: EventfulSet<PossibleStates> = new EventfulSet();
+
   constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number) {
     if (!(parent instanceof XdgSurface)) throw new Error('Parent must be xdg_surface');
     super(conx, args, ifaceName, oid, parent, version);
+    this.parent = parent;
 
     parent.role = this;
     parent.surface.setRole("toplevel");
@@ -31,15 +66,32 @@ export class XdgToplevel extends BaseObject {
   }
 
   configureSequence(window: boolean, capabilities: boolean) {
-    // TODO: Let DE configure which output to use
-    const maybeDefaultOutput = this.connection.display.outputAuthorities.values().next().value!.config;
-    const currentOutput = (this.parent as XdgSurface).surface.outputs.values().next().value?.config || maybeDefaultOutput;
+    // TODO: Let DE configure which default output to use
+    const defaultOutput = anyValue(this.connection.display.outputAuthorities)!.config;
+    const currentOutput = anyValue(this.parent.surface.outputs)?.config || defaultOutput;
 
     // TODO: Retrieve that automatically (from config or sth idk)
-    this.addCommand('configureBounds', { width: currentOutput.effectiveW, height: currentOutput.effectiveH });
-    this.addCommand('wmCapabilities', { capabilities: Buffer.alloc(0) });
-    this.addCommand('configure', { width: this.lastDimensions[1], height: this.lastDimensions[0], states: Buffer.alloc(0) });
-    (this.parent as XdgSurface).addCommand('configure', { serial: (this.parent as XdgSurface).newSerial() });
+    this.addCommand('configureBounds', {
+      width: currentOutput.effectiveW,
+      height: currentOutput.effectiveH,
+    });
+
+    if (capabilities) {
+      this.addCommand('wmCapabilities', { capabilities: Buffer.alloc(0) });
+    }
+
+    if (window) {
+      this.addCommand('configure', {
+        width: this.lastDimensions[1],
+        height: this.lastDimensions[0],
+        states: Buffer.from(
+          [...this.states]
+            .map((v) => interfaces.xdg_surface.enums.states.atoi[v])
+        ),
+      });
+    }
+
+    this.parent.addCommand('configure', { serial: this.parent.newSerial() });
   }
 
   wlSetTitle(args: { title: string }) {

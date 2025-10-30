@@ -32,7 +32,7 @@ export class SeatAuthority extends ObjectAuthority<WlSeat, SeatConfiguration> {
   modifiers(dep: number, latch: number, lock: number, group: number, serial?: number) {
     this.forAll(function (this: SeatAuthority, wlSeat: WlSeat) {
       wlSeat.addCommandToKeyboards('modifiers', {
-        serial: serial || this.connection.serial.next(),
+        serial: serial ?? this.connection.serial.next(),
         modsDepressed: dep,
         modsLatched: latch,
         modsLocked: lock,
@@ -42,14 +42,18 @@ export class SeatAuthority extends ObjectAuthority<WlSeat, SeatConfiguration> {
     this.connection.sendPending();
   }
   focus(surf: WlSurface, keysDown: number[]) {
+    const focusSerial = this.connection.serial.next();
+
     this.forAll(function (this: SeatAuthority, wlSeat: WlSeat) {
       wlSeat.addCommandToKeyboards('enter', {
-        serial: (this.connection as HLConnection).time.getTime(),
+        serial: focusSerial,
         surface: surf,
         keys: Buffer.from(keysDown),
       });
     }.bind(this));
     this.connection.sendPending();
+
+    return focusSerial;
   }
   blur(surf: WlSurface) {
     this.forAll(function (this: SeatAuthority, wlSeat: WlSeat) {
