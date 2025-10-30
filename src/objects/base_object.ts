@@ -1,9 +1,13 @@
-import { interfaces, ObjectReference } from "@cathodique/wl-serv-low";
+import { Connection, interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
 import type { WlRegistry } from "./wl_registry";
 import { HLConnection } from "../index";
 
 class ImplementationError extends Error {
 
+}
+
+export interface NewObjectDescriptorWithConx extends Omit<NewObjectDescriptor, "parent"> {
+  connection: HLConnection;
 }
 
 export class BaseObject<T extends Record<string, any[]> | [never] = Record<string, any[]> | [never]> extends ObjectReference<T> {
@@ -12,13 +16,25 @@ export class BaseObject<T extends Record<string, any[]> | [never] = Record<strin
   connection: HLConnection;
   parent: BaseObject;
 
-  constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, newOid: number, parent?: ObjectReference<any>, version?: number) {
-    super(ifaceName, newOid, parent, version);
+  constructor(initCtx: NewObjectDescriptor | NewObjectDescriptorWithConx) {
+    if ("parent" in initCtx) {
+      if (initCtx.parent instanceof BaseObject) {
+        super(initCtx.type, initCtx.oid, initCtx.parent);
 
-    if (parent && !(parent instanceof BaseObject)) throw new Error("Parent of BaseObject must be BaseObject");
-    this.parent = parent || this;
+        this.parent = initCtx.parent;
+        this.connection = initCtx.parent.connection;
+      } else {
+        throw new Error("Parent of a BaseObject must be a BaseObject");
+      }
 
-    this.connection = conx;
+    } else {
+      super(initCtx.type, initCtx.oid);
+
+      this.parent = this;
+      this.connection = initCtx.connection;
+    }
+    // this.connection.createObject(this);
+    // Bad side-effect apparently...
   }
 
   wlDestroy() {

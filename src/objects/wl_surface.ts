@@ -6,7 +6,7 @@ import { WlSubsurface } from "./wl_subsurface.js";
 import { DoubleBuffer } from "../lib/doublebuffer.js";
 import { XdgSurface } from "./xdg_surface.js";
 import { HLConnection } from "../index.js";
-import { interfaces, ObjectReference } from "@cathodique/wl-serv-low";
+import { NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
 import { OutputAuthority, OutputConfiguration, WlOutput } from "./wl_output.js";
 import { SeatConfiguration, WlSeat } from "./wl_seat.js";
 import { WlDataDevice } from "./wl_data_device.js";
@@ -46,6 +46,7 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
   scale: DoubleBuffer<number> = new DoubleBuffer(1, this);
   offset: DoubleBuffer<[number, number]> = new DoubleBuffer([0, 0], this);
 
+  // TODO: Add getter/setter to check role stays the same (_role, _roleActive)
   role?: SurfaceRoles;
   roleActive: boolean = false;
   setRole(role: SurfaceRoles) {
@@ -60,8 +61,8 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
   }
   doubleBufferedState: Set<DoubleBuffer<any>> = new Set([this.opaqueRegions, this.inputRegions, this.buffer, this.scale, this.surfaceDamage, this.bufferDamage, this.offset]);
 
-  constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: ObjectReference, version?: number) {
-    super(conx, args, ifaceName, oid, parent, version);
+  constructor(initCtx: NewObjectDescriptor) {
+    super(initCtx);
   }
 
   outputs: Set<OutputAuthority> = new Set();
@@ -92,7 +93,8 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
     this.offset.pending = [y, x];
   }
 
-  wlFrame({ callback }: { callback: WlCallback }) {
+  wlFrame({ callback }: { callback: NewObjectDescriptor }) {
+    // TODO: git refactor-object-creation : Create object
     this.connection.hlCompositor.ticks.once('tick', (function (this: WlSurface) {
       callback.done(this.connection.time.getTime());
       this.connection.sendPending();
@@ -110,7 +112,7 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
 
   get synced(): boolean {
     if (!this.subsurface) return false;
-    return this.subsurface.isSynced || this.subsurface.assocParent.synced;
+    return this.subsurface.isSynced || this.subsurface.meta.parent.synced;
   }
 
   update() {

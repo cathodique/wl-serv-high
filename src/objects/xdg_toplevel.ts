@@ -1,4 +1,4 @@
-import { interfaces, ObjectReference } from "@cathodique/wl-serv-low";
+import { interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
 import { HLConnection } from "../index.js";
 import { BaseObject } from "./base_object.js";
 import { XdgSurface } from "./xdg_surface.js";
@@ -48,18 +48,23 @@ export class XdgToplevel extends BaseObject {
 
   readonly states: EventfulSet<PossibleStates> = new EventfulSet();
 
-  constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number) {
-    if (!(parent instanceof XdgSurface)) throw new Error('Parent must be xdg_surface');
-    super(conx, args, ifaceName, oid, parent, version);
-    this.parent = parent;
+  constructor(initCtx: NewObjectDescriptor) {
+    super(initCtx);
 
-    parent.role = this;
-    parent.surface.setRole("toplevel");
+    if (!(initCtx.parent instanceof XdgSurface)) throw new Error('Parent must be xdg_surface');
+    this.parent = initCtx.parent;
+
+    this.parent.toplevel = this;
+    this.parent.role = "toplevel";
+    this.parent.surface.setRole("toplevel");
 
     this.configureSequence(true, true);
-    parent.surface.on("wlCommit", function (this: XdgToplevel) {
-      if (!(parent.geometry.current.height === this.lastDimensions[0] && parent.geometry.current.width === this.lastDimensions[1])) {
-        this.lastDimensions = [parent.geometry.current.height, parent.geometry.current.width];
+    this.parent.surface.on("wlCommit", function (this: XdgToplevel) {
+      if (!(
+        this.parent.geometry.current.height === this.lastDimensions[0]
+        && this.parent.geometry.current.width === this.lastDimensions[1]
+      )) {
+        this.lastDimensions = [this.parent.geometry.current.height, this.parent.geometry.current.width];
         this.configureSequence(true, false);
       }
     }.bind(this));

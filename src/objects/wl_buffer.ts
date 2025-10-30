@@ -1,40 +1,35 @@
-import { HLConnection } from "../index.js";
 import { colorspaces } from "../misc/colorspaces.js";
 import { BaseObject } from "./base_object.js";
 import { WlShmPool } from "./wl_shm_pool.js";
 import mmap from "@cathodique/mmap-io";
 import { interfaces } from "@cathodique/wl-serv-low";
-import type { ObjectReference } from "@cathodique/wl-serv-low";
+import type { NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
 import { WlSurface } from "./wl_surface.js";
 
-export interface WlBufferMetadata {
-
-}
-
-export class WlBuffer extends BaseObject {
+interface WlBufferArgs {
   offset: number;
   width: number;
   height: number;
   stride: number;
   format: number;
+}
+
+export class WlBuffer extends BaseObject {
+  meta: WlBufferArgs;
 
   surface?: WlSurface;
   buffer: Buffer;
   parent: WlShmPool;
 
-  constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: ObjectReference, version?: number) {
-    super(conx, args, ifaceName, oid, parent, version);
+  constructor(initCtx: NewObjectDescriptor, args: WlBufferArgs) {
+    super(initCtx);
 
-    if (!(parent instanceof WlShmPool)) throw new Error('wl_buffer must only be created using wl_shm_pool.create_buffer');
-    this.parent = parent;
+    if (!(initCtx.parent instanceof WlShmPool)) throw new Error('wl_buffer must only be created using wl_shm_pool.create_buffer');
+    this.parent = initCtx.parent;
 
     this.parent.daughterBuffers.add(this);
 
-    this.offset = args.offset;
-    this.width = args.width;
-    this.height = args.height;
-    this.stride = args.stride;
-    this.format = args.format;
+    this.meta = args;
 
     this.buffer = Buffer.alloc(this.size);
   }
@@ -48,11 +43,11 @@ export class WlBuffer extends BaseObject {
 
   get pixelSize() {
     return colorspaces[
-      interfaces.wl_shm.enums.format.itoa[this.format] as keyof typeof colorspaces
+      interfaces.wl_shm.enums.format.itoa[this.meta.format] as keyof typeof colorspaces
     ].bytesPerPixel;
   }
   get size() {
-    return Math.max(this.stride * (this.height - 1) + this.width * this.pixelSize, 0);
+    return Math.max(this.meta.stride * (this.meta.height - 1) + this.meta.width * this.pixelSize, 0);
   }
 
   // getBuffer() {
@@ -60,7 +55,7 @@ export class WlBuffer extends BaseObject {
   // }
 
   getBoundedRect(y: number, x: number, h: number, w: number) {
-    return [Math.min(h, this.height - y), Math.min(w, this.width - x)];
+    return [Math.min(h, this.meta.height - y), Math.min(w, this.meta.width - x)];
   }
 
   getBufferArea(y: number, x: number, h: number, w: number) {
@@ -68,9 +63,9 @@ export class WlBuffer extends BaseObject {
       this.parent.bufferId,
       y,
       x,
-      Math.min(h, this.height - y),
-      Math.min(w, this.width - x),
-      this.stride,
+      Math.min(h, this.meta.height - y),
+      Math.min(w, this.meta.width - x),
+      this.meta.stride,
       this.pixelSize,
     );
   }
@@ -80,9 +75,9 @@ export class WlBuffer extends BaseObject {
       this.buffer,
       y,
       x,
-      Math.min(h, this.height - y),
-      Math.min(w, this.width - x),
-      this.stride,
+      Math.min(h, this.meta.height - y),
+      Math.min(w, this.meta.width - x),
+      this.meta.stride,
       this.pixelSize,
     );
   }
