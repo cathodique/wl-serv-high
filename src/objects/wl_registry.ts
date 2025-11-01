@@ -1,13 +1,30 @@
-import { interfaces } from "@cathodique/wl-serv-low";
+import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
 import { HLConnection } from "../index.js";
 import { BaseObject } from "./base_object.js";
-import { OutputAuthority, OutputConfiguration } from "./wl_output.js";
-import { SeatAuthority, SeatConfiguration } from "./wl_seat.js";
+import { OutputAuthority, OutputConfiguration, WlOutput } from "./wl_output.js";
+import { SeatAuthority, SeatConfiguration, WlSeat } from "./wl_seat.js";
+import { WlCompositor } from "./wl_compositor.js";
+import { WlSubcompositor } from "./wl_subcompositor.js";
+import { WlShm } from "./wl_shm.js";
+import { WlDataDeviceManager } from "./wl_data_device_manager.js";
+import { XdgWmBase } from "./xdg_wm_base.js";
+import { ZxdgDecorationManagerV1 } from "./zxdg_decoration_manager_v1.js";
 
 export interface WlRegistryMetadata {
   outputs: OutputConfiguration[];
   seats: SeatConfiguration[];
 }
+
+const newIdMap = {
+  wl_compositor: WlCompositor,
+  wl_shm: WlShm,
+  wl_subcompositor: WlSubcompositor,
+  wl_data_device_manager: WlDataDeviceManager,
+  wl_seat: WlSeat,
+  wl_output: WlOutput,
+  xdg_wm_base: XdgWmBase,
+  zxdg_decoration_manager_v1: ZxdgDecorationManagerV1,
+};
 
 // TODO: REFACTOR (WTF!!)
 
@@ -19,8 +36,8 @@ export class WlRegistry extends BaseObject {
     'wl_compositor',
     'wl_shm',
     'wl_subcompositor',
-    'xdg_wm_base',
     'wl_data_device_manager',
+    'xdg_wm_base',
     'zxdg_decoration_manager_v1',
   ]
 
@@ -35,9 +52,9 @@ export class WlRegistry extends BaseObject {
   outputAuthoritiesByName: Map<number, OutputAuthority> = new Map();
   seatAuthoritiesByName: Map<number, SeatAuthority> = new Map();
 
-  constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number) {
+  constructor(initCtx: NewObjectDescriptor) {
     // if (conx.registry) return conx.registry;
-    super(conx, args, ifaceName, oid, parent, version);
+    super(initCtx);
 
     for (const outputAuth of this.connection.display.outputAuthorities.values()) {
       const nextIdx = this.contents.length;
@@ -55,7 +72,7 @@ export class WlRegistry extends BaseObject {
       const name = this.contents[numericName];
       if (!name) continue;
       const iface = interfaces[name];
-      conx.addCommand(this, 'global', { name: numericName, interface: iface.name, version: iface.version });
+      this.connection.addCommand(this, 'global', { name: numericName, interface: iface.name, version: iface.version });
     }
   }
 
@@ -66,5 +83,11 @@ export class WlRegistry extends BaseObject {
   //   regMeta.seats.unapplyTo(this);
   // }
 
-  wlBind({ id }: { id: BaseObject }) {}
+  wlBind(args: { id: NewObjectDescriptor, name: number }) {
+    const ifaceName = args.id.type;
+    const isInNewIdMap = (val: string): val is keyof typeof newIdMap => val in newIdMap;
+    if (!isInNewIdMap(ifaceName)) return this.connection.display.raiseError('invalid_method', "No such interface in registry");
+
+    this.connection.createObject(new newIdMap[ifaceName](args.id, args.name));
+  }
 }

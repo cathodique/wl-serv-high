@@ -1,8 +1,8 @@
-import { interfaces, ObjectReference } from "@cathodique/wl-serv-low";
+import { interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
 import { HLConnection } from "../index.js";
 import { BaseObject } from "./base_object.js";
 import { XdgSurface } from "./xdg_surface.js";
-import { ZxdgDecorationManagerV1 } from "./zxdg_decoration_manager_v1.js";
+import { ZxdgDecorationManagerV1, ZxdgToplevelDecorationV1 } from "./zxdg_decoration_manager_v1.js";
 import { EventEmitter } from "node:stream";
 
 const anyValue = <T>(s: Set<T> | Map<any, T>): T | undefined => s.values().next().value;
@@ -44,22 +44,27 @@ export class XdgToplevel extends BaseObject {
 
   lastDimensions: [number, number] = [0, 0];
 
-  decoration?: ZxdgDecorationManagerV1;
+  decoration?: ZxdgToplevelDecorationV1;
 
   readonly states: EventfulSet<PossibleStates> = new EventfulSet();
 
-  constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number) {
-    if (!(parent instanceof XdgSurface)) throw new Error('Parent must be xdg_surface');
-    super(conx, args, ifaceName, oid, parent, version);
-    this.parent = parent;
+  constructor(initCtx: NewObjectDescriptor) {
+    super(initCtx);
 
-    parent.role = this;
-    parent.surface.setRole("toplevel");
+    if (!(initCtx.parent instanceof XdgSurface)) throw new Error('Parent must be xdg_surface');
+    this.parent = initCtx.parent;
+
+    this.parent.toplevel = this;
+    this.parent.role = "toplevel";
+    this.parent.surface.setRole("toplevel");
 
     this.configureSequence(true, true);
-    parent.surface.on("wlCommit", function (this: XdgToplevel) {
-      if (!(parent.geometry.current.height === this.lastDimensions[0] && parent.geometry.current.width === this.lastDimensions[1])) {
-        this.lastDimensions = [parent.geometry.current.height, parent.geometry.current.width];
+    this.parent.surface.on("wlCommit", function (this: XdgToplevel) {
+      if (!(
+        this.parent.geometry.current.height === this.lastDimensions[0]
+        && this.parent.geometry.current.width === this.lastDimensions[1]
+      )) {
+        this.lastDimensions = [this.parent.geometry.current.height, this.parent.geometry.current.width];
         this.configureSequence(true, false);
       }
     }.bind(this));

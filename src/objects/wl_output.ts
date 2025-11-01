@@ -1,22 +1,7 @@
 import { BaseObject } from "./base_object.js";
-import { interfaces, ObjectReference } from "@cathodique/wl-serv-low";
+import { interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
 import { HLConnection } from "../index.js";
 import { ObjectAuthority } from "../lib/objectAuthority.js";
-
-// type OutputServerToClient = { 'update': [], 'enter': [WlSurface] };
-// export type OutputEventServer = EventServer<OutputServerToClient, {}>;
-// export type OutputEventClient = EventClient<{}, OutputServerToClient>;
-// export class OutputRegistry {
-//   get iface() { return name }
-
-//   current: OutputConfiguration;
-
-//   constructor(v: OutputConfiguration[], current: OutputConfiguration = v[0]){
-
-
-//     this.current = current;
-//   }
-// }
 
 export class OutputAuthority extends ObjectAuthority<WlOutput, OutputConfiguration> {
 }
@@ -34,10 +19,10 @@ export class WlOutput extends BaseObject {
   info: OutputConfiguration;
   authority: OutputAuthority;
 
-  constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: ObjectReference, version?: number) {
-    super(conx, args, ifaceName, oid, parent, version);
+  constructor(initCtx: NewObjectDescriptor, outputName: number) {
+    super(initCtx);
 
-    this.authority = this.registry!.outputAuthoritiesByName.get(args.name)!;
+    this.authority = this.registry!.outputAuthoritiesByName.get(outputName)!;
     this.authority.bind(this);
     this.info = this.authority.config;
 

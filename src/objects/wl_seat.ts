@@ -4,7 +4,7 @@ import { WlPointer } from "./wl_pointer.js";
 import { WlKeyboard } from "./wl_keyboard.js";
 import { ObjectAuthority } from "../lib/objectAuthority.js";
 import { WlSurface } from "./wl_surface.js";
-import { interfaces } from "@cathodique/wl-serv-low";
+import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
 
 export interface SeatConfiguration {
   name: string;
@@ -166,10 +166,10 @@ export class WlSeat extends BaseObject {
   pointers: Set<WlPointer> = new Set();
   keyboards: Set<WlKeyboard> = new Set();
 
-  constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number) {
-    super(conx, args, ifaceName, oid, parent, version);
+  constructor(initCtx: NewObjectDescriptor, seatName: number) {
+    super(initCtx);
 
-    this.authority = this.registry!.seatAuthoritiesByName.get(args.name)!;
+    this.authority = this.registry!.seatAuthoritiesByName.get(seatName)!;
     this.authority.bind(this);
     this.info = this.authority.config;
 
@@ -177,10 +177,14 @@ export class WlSeat extends BaseObject {
     this.addCommand('capabilities', { capabilities: this.info.capabilities });
   }
 
-  wlGetPointer({ id: pointer }: { id: WlPointer }) {
+  wlGetPointer({ id }: { id: NewObjectDescriptor }) {
+    const pointer = new WlPointer(id);
+    this.connection.createObject(pointer);
     this.pointers.add(pointer);
   }
-  wlGetKeyboard({ id: keyboard }: { id: WlKeyboard }) {
+  wlGetKeyboard({ id }: { id: NewObjectDescriptor }) {
+    const keyboard = new WlKeyboard(id);
+    this.connection.createObject(keyboard);
     this.keyboards.add(keyboard);
   }
 

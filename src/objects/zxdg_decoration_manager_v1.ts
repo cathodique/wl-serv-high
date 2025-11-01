@@ -1,19 +1,24 @@
-import { interfaces } from "@cathodique/wl-serv-low";
-import { HLConnection } from "..";
+import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
 import { BaseObject } from "./base_object";
 import { XdgToplevel } from "./xdg_toplevel";
 import { XdgSurface } from "./xdg_surface";
 
-export class ZxdgDecorationManagerV1 extends BaseObject { }
+export class ZxdgDecorationManagerV1 extends BaseObject {
+  wlGetToplevelDecoration(args: { id: NewObjectDescriptor, toplevel: XdgToplevel }) {
+    this.connection.createObject(new ZxdgToplevelDecorationV1(args.id, args.toplevel));
+  }
+}
 
 export class ZxdgToplevelDecorationV1 extends BaseObject {
   xdgToplevel: XdgToplevel;
-  constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number) {
-    super(conx, args, ifaceName, oid, parent, version);
 
-    if (!(args.toplevel instanceof XdgToplevel)) throw this.connection.display.raiseError('invalid_method', 'toplevel is not a toplevel');
+  constructor(initCtx: NewObjectDescriptor, toplevel: XdgToplevel) {
+    super(initCtx);
 
-    this.xdgToplevel = args.toplevel;
+    // TODO: Is this check necessary? Why is this check not systematic?
+    if (!(toplevel instanceof XdgToplevel)) throw this.connection.display.raiseError('invalid_method', 'toplevel is not a toplevel');
+
+    this.xdgToplevel = toplevel;
     if (this.xdgToplevel.decoration) throw this.raiseError('already_constructed');
     this.xdgToplevel.decoration = this;
   }

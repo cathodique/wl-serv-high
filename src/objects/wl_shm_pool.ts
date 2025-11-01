@@ -1,33 +1,43 @@
 import mmap from "@cathodique/mmap-io";
 import { BaseObject } from "./base_object.js";
 import { WlBuffer } from "./wl_buffer.js";
-import { HLConnection } from "../index.js";
+import { NewObjectDescriptor } from "@cathodique/wl-serv-low";
 
-export class WlShmPool extends BaseObject {
+interface WlShmPoolArgs {
   size: number;
   fd: number;
+}
+
+export class WlShmPool extends BaseObject {
+  meta: WlShmPoolArgs;
 
   daughterBuffers: Set<WlBuffer> = new Set();
 
   bufferId: number;
 
-  constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: BaseObject, version?: number) {
-    super(conx, args, ifaceName, oid, parent, version);
+  constructor(initCtx: NewObjectDescriptor, args: WlShmPoolArgs) {
+    super(initCtx);
 
     const readwrite = (mmap.PROT_READ | mmap.PROT_WRITE) as 3;
     this.bufferId = mmap.map(args.size, readwrite, mmap.MAP_SHARED, args.fd);
-    this.size = args.size;
-    this.fd = args.fd;
+    this.meta = args;
   }
 
   wlResize(args: Record<string, any>) {
     mmap.unmap(this.bufferId);
-    this.size = args.size;
-    this.bufferId = mmap.map(this.size, mmap.PROT_READ, mmap.MAP_SHARED, this.fd, 0);
+    this.meta.size = args.size;
+    this.bufferId = mmap.map(this.meta.size, mmap.PROT_READ, mmap.MAP_SHARED, this.meta.fd, 0);
   }
 
-  // wlDestroy(): void {
-  //   mmap.unmap(this.bufferId);
-  //   TODO: Unmap when appropriate
-  // }
+  wlCreateBuffer(args: { id: NewObjectDescriptor, offset: number, width: number, height: number, stride: number, format: number }) {
+    this.connection.createObject(
+      new WlBuffer(args.id, {
+        offset: args.offset,
+        width: args.width,
+        height: args.height,
+        stride: args.stride,
+        format: args.format,
+      })
+    );
+  }
 }

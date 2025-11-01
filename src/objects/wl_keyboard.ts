@@ -8,7 +8,7 @@ import { promises as fsp } from "fs";
 import { FileHandle } from "fs/promises";
 import { WlSeat } from "./wl_seat.js";
 import { randomUUID } from "crypto";
-import { interfaces, ObjectReference } from "@cathodique/wl-serv-low";
+import { interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
 import { HLConnection } from "../index.js";
 
 type KeyboardServerToClient = { 'edit_keymap': [] };
@@ -66,13 +66,13 @@ export type WlKeyboardMetadata = KeyboardRegistry;
 export class WlKeyboard extends BaseObject<KeyboardEvents> {
   meta: KeyboardRegistry;
 
-  constructor(conx: HLConnection, args: Record<string, any>, ifaceName: string, oid: number, parent?: ObjectReference, version?: number) {
+  constructor(initCtx: NewObjectDescriptor) {
     // if (conx.registry) return conx.registry;
-    super(conx, args, ifaceName, oid, parent, version);
+    super(initCtx);
 
     this.meta = this.connection.hlCompositor.metadata.wl_keyboard;
 
-    if (!(parent instanceof WlSeat)) throw new Error('WlPointer needs to be initialized in the scope of a wl_seat');
+    if (!(initCtx.parent instanceof WlSeat)) throw new Error('WlPointer needs to be initialized in the scope of a wl_seat');
 
     this.announceKeymap();
     // const seatRegistry = parent.seatRegistry;
