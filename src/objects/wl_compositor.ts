@@ -1,10 +1,13 @@
+import { NewObjectDescriptor } from "@cathodique/wl-serv-low";
 import { BaseObject } from "./base_object.js";
+import { WlSurface } from "./wl_surface.js";
+import { WlRegion } from "./wl_region.js";
 
 export class WlCompositor extends BaseObject {
-  wlCreateSurface() {
-    // TODO: git refactor-object-creation : Create object
+  wlCreateSurface(args: { id: NewObjectDescriptor }) {
+    this.connection.createObject(new WlSurface(args.id));
   }
-  wlCreateRegion() {
-    // TODO: git refactor-object-creation : Create object
+  wlCreateRegion(args: { id: NewObjectDescriptor }) {
+    this.connection.createObject(new WlRegion(args.id));
   }
 }

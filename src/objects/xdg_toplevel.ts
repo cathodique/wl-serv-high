@@ -2,7 +2,7 @@ import { interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl
 import { HLConnection } from "../index.js";
 import { BaseObject } from "./base_object.js";
 import { XdgSurface } from "./xdg_surface.js";
-import { ZxdgDecorationManagerV1 } from "./zxdg_decoration_manager_v1.js";
+import { ZxdgDecorationManagerV1, ZxdgToplevelDecorationV1 } from "./zxdg_decoration_manager_v1.js";
 import { EventEmitter } from "node:stream";
 
 const anyValue = <T>(s: Set<T> | Map<any, T>): T | undefined => s.values().next().value;
@@ -44,7 +44,7 @@ export class XdgToplevel extends BaseObject {
 
   lastDimensions: [number, number] = [0, 0];
 
-  decoration?: ZxdgDecorationManagerV1;
+  decoration?: ZxdgToplevelDecorationV1;
 
   readonly states: EventfulSet<PossibleStates> = new EventfulSet();
 

@@ -88,7 +88,7 @@ export class HLConnection extends Connection<BaseObject> {
       type: 'wl_display',
       connection: this,
     });
-    // this.createObject(this.display);
+    this.createObject(this.display);
 
     // Handle client disconnect
     sock.on("end", function (this: HLConnection) {

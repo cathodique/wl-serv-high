@@ -23,7 +23,7 @@ export class XdgPopup extends BaseObject {
     this.parent.role = "popup";
     this.parent.surface.setRole("popup");
 
-    // TODO: Retrieve that automatically (from positioner or sth idk)
+    // EASY TODO: Retrieve that automatically (from positioner or sth idk)
     this.addCommand('configure', { width: 600, height: 600, x: 0, y: 0 });
     this.parent.addCommand('configure', { serial: this.parent.newSerial() });
   }

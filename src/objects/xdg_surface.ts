@@ -76,14 +76,15 @@ export class XdgSurface extends BaseObject {
   wlGetToplevel(args: { id: NewObjectDescriptor }) {
     this.role = "toplevel";
 
-    // TODO: git refactor-object-creation : Create object
-    this.toplevel = args.id;
+    this.toplevel = new XdgToplevel(args.id);
+    this.connection.createObject(this.toplevel);
   }
 
   wlGetPopup(args: { id: NewObjectDescriptor, parent: XdgSurface, positioner: XdgPositioner }) {
     this.role = "popup";
 
     // TODO: git refactor-object-creation : Create object
-    this.popup = args.id;
+    this.popup = new XdgPopup(args.id, { parent: args.parent, positioner: args.positioner });
+    this.connection.createObject(this.popup);
   }
 }

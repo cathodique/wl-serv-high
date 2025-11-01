@@ -29,7 +29,15 @@ export class WlShmPool extends BaseObject {
     this.bufferId = mmap.map(this.meta.size, mmap.PROT_READ, mmap.MAP_SHARED, this.meta.fd, 0);
   }
 
-  wlCreateBuffer() {
-    // TODO: git refactor-object-creation : Create object
+  wlCreateBuffer(args: { id: NewObjectDescriptor, offset: number, width: number, height: number, stride: number, format: number }) {
+    this.connection.createObject(
+      new WlBuffer(args.id, {
+        offset: args.offset,
+        width: args.width,
+        height: args.height,
+        stride: args.stride,
+        format: args.format,
+      })
+    );
   }
 }

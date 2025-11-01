@@ -177,12 +177,14 @@ export class WlSeat extends BaseObject {
     this.addCommand('capabilities', { capabilities: this.info.capabilities });
   }
 
-  wlGetPointer({ id: pointer }: { id: NewObjectDescriptor }) {
-    // TODO: git refactor-object-creation : Create object
+  wlGetPointer({ id }: { id: NewObjectDescriptor }) {
+    const pointer = new WlPointer(id);
+    this.connection.createObject(pointer);
     this.pointers.add(pointer);
   }
-  wlGetKeyboard({ id: keyboard }: { id: NewObjectDescriptor }) {
-    // TODO: git refactor-object-creation : Create object
+  wlGetKeyboard({ id }: { id: NewObjectDescriptor }) {
+    const keyboard = new WlKeyboard(id);
+    this.connection.createObject(keyboard);
     this.keyboards.add(keyboard);
   }
 

@@ -3,6 +3,7 @@ import { BaseObject, NewObjectDescriptorWithConx } from "./base_object.js";
 import { OutputAuthority, OutputConfiguration } from "./wl_output.js";
 import { SeatAuthority, SeatConfiguration } from "./wl_seat.js";
 import { NewObjectDescriptor } from "@cathodique/wl-serv-low";
+import { WlRegistry } from "./wl_registry.js";
 
 export class WlDisplay extends BaseObject {
   _version: number = 1;
@@ -29,13 +30,14 @@ export class WlDisplay extends BaseObject {
 
   wlSync(args: { callback: NewObjectDescriptor }) {
     const callback = new WlCallback(args.callback);
+    this.connection.createObject(callback);
 
     callback.done(1);
     // console.log('AAAA')
     this.connection.sendPending();
   }
-  wlGetRegistry() {
-    // TODO: git refactor-object-creation : Create object
+  wlGetRegistry(args: { registry: NewObjectDescriptor }) {
+    this.connection.createObject(new WlRegistry(args.registry));
   }
 
   wlDestroy(): void {}

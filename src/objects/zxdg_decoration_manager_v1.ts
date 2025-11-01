@@ -3,7 +3,11 @@ import { BaseObject } from "./base_object";
 import { XdgToplevel } from "./xdg_toplevel";
 import { XdgSurface } from "./xdg_surface";
 
-export class ZxdgDecorationManagerV1 extends BaseObject { }
+export class ZxdgDecorationManagerV1 extends BaseObject {
+  wlGetToplevelDecoration(args: { id: NewObjectDescriptor, toplevel: XdgToplevel }) {
+    this.connection.createObject(new ZxdgToplevelDecorationV1(args.id, args.toplevel));
+  }
+}
 
 export class ZxdgToplevelDecorationV1 extends BaseObject {
   xdgToplevel: XdgToplevel;

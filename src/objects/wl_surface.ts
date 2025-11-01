@@ -93,8 +93,10 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
     this.offset.pending = [y, x];
   }
 
-  wlFrame({ callback }: { callback: NewObjectDescriptor }) {
-    // TODO: git refactor-object-creation : Create object
+  wlFrame({ callback: cbId }: { callback: NewObjectDescriptor }) {
+    const callback = new WlCallback(cbId);
+    this.connection.createObject(callback);
+
     this.connection.hlCompositor.ticks.once('tick', (function (this: WlSurface) {
       callback.done(this.connection.time.getTime());
       this.connection.sendPending();
