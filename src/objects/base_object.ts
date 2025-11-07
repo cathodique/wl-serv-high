@@ -19,7 +19,7 @@ export class BaseObject<T extends Record<string, any[]> | [never] = Record<strin
   constructor(initCtx: NewObjectDescriptor | NewObjectDescriptorWithConx) {
     if ("parent" in initCtx) {
       if (initCtx.parent instanceof BaseObject) {
-        super(initCtx.type, initCtx.oid, initCtx.parent);
+        super(initCtx.type, initCtx.oid, initCtx.parent, initCtx.version);
 
         this.parent = initCtx.parent;
         this.connection = initCtx.parent.connection;
