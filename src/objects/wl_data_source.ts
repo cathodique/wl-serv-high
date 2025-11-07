@@ -5,7 +5,7 @@ import { BaseObject } from "./base_object";
 type Action = "copy" | "move" | "ask";
 type NullableAction = Action | "none";
 
-const actionEnum = interfaces["wl_data_device_manager"].enums["dnd_action"];
+const actionEnum = interfaces["wl_data_device_manager"].enums.dndAction;
 const actionMap = new Map(Object.entries(actionEnum.itoa as Record<string, NullableAction>).map(([k, v]) => [+k, v]));
 
 // TODO Finish the implementation - this is not the job of the branch we are currently in

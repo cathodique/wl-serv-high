@@ -1,4 +1,4 @@
-import { Connection, interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
+import { interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
 import type { WlRegistry } from "./wl_registry";
 import { HLConnection } from "../index";
 
