@@ -50,10 +50,6 @@ export class WlBuffer extends BaseObject {
     return Math.max(this.meta.stride * (this.meta.height - 1) + this.meta.width * this.pixelSize, 0);
   }
 
-  // getBuffer() {
-  //   return mmap.getbuffer((this.parent as WlShmPool).bufferId);
-  // }
-
   getBoundedRect(y: number, x: number, h: number, w: number) {
     return [Math.min(h, this.meta.height - y), Math.min(w, this.meta.width - x)];
   }
@@ -81,9 +77,4 @@ export class WlBuffer extends BaseObject {
       this.pixelSize,
     );
   }
-
-  // getByte(i: number) {
-  //   // console.log((this.parent as WlShmPool).size);
-  //   return mmap.getbyte((this.parent as WlShmPool).bufferId, i + this.offset);
-  // }
 }

@@ -1,5 +1,4 @@
 import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
-import { HLConnection } from "../index.js";
 import { BaseObject } from "./base_object.js";
 import { OutputAuthority, OutputConfiguration, WlOutput } from "./wl_output.js";
 import { SeatAuthority, SeatConfiguration, WlSeat } from "./wl_seat.js";
@@ -49,6 +48,7 @@ export class WlRegistry extends BaseObject {
 
   contents: (string | null)[] = [...WlRegistry.baseRegistry];
 
+  // TODO: Dynamic seat/output removal/creation.
   outputAuthoritiesByName: Map<number, OutputAuthority> = new Map();
   seatAuthoritiesByName: Map<number, SeatAuthority> = new Map();
 

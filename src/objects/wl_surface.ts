@@ -5,7 +5,6 @@ import { WlCallback } from "./wl_callback.js";
 import { WlSubsurface } from "./wl_subsurface.js";
 import { DoubleBuffer } from "../lib/doublebuffer.js";
 import { XdgSurface } from "./xdg_surface.js";
-import { HLConnection } from "../index.js";
 import { NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
 import { OutputAuthority, OutputConfiguration, WlOutput } from "./wl_output.js";
 import { SeatConfiguration, WlSeat } from "./wl_seat.js";

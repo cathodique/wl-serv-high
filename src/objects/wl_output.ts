@@ -1,6 +1,5 @@
 import { BaseObject } from "./base_object.js";
-import { interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
-import { HLConnection } from "../index.js";
+import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
 import { ObjectAuthority } from "../lib/objectAuthority.js";
 
 export class OutputAuthority extends ObjectAuthority<WlOutput, OutputConfiguration> {
@@ -27,9 +26,6 @@ export class WlOutput extends BaseObject {
     this.info = this.authority.config;
 
     this.advertise();
-    // this.recipient.on('update', this.advertise.bind(this));
-    // this.recipient.on('enter', function (this: WlOutput, surf: WlSurface) {
-    // }.bind(this));
   }
 
   advertise() {

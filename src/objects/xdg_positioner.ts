@@ -23,10 +23,21 @@ const cstrAdjEnum = interfaces["xdg_positioner"].enums.constraintAdjustment;
 const caMap = new Map(Object.entries(cstrAdjEnum.itoa as Record<string, ConstraintAdjustments>).map(([k, v]) => [+k, v]));
 
 // I actually forgot why I made this interface.
-interface FromTo {
+// Re: No you didn't
+export interface FromTo {
   from: [number, number];
   to: [number, number];
 }
+
+// AI-gen
+export interface Rect {
+  x: number;      // Horizontal position (left)
+  y: number;      // Vertical position (top)
+  width: number;  // Width of the rectangle
+  height: number; // Height of the rectangle
+}
+
+type CompleteXdgPositioner = XdgPositioner & { size: [number, number], anchorPos: [number, number], anchorSize: [number, number] };
 
 export class XdgPositioner extends BaseObject {
   size?: [number, number]; // YX
@@ -67,12 +78,12 @@ export class XdgPositioner extends BaseObject {
     this.offset = [y, x];
   }
 
-  constraintAdjustment?: Set<ConstraintAdjustments>;
+  constraintAdjustment: Set<ConstraintAdjustments> = new Set();
   wlSetConstraintAdjustment({ constraintAdjustment }: { constraintAdjustment: number }) {
     this.constraintAdjustment = bitfieldValueToObject(caMap, constraintAdjustment);
   }
 
-  private static isComplete(that: XdgPositioner): that is XdgPositioner & { size: [number, number], anchorPos: [number, number], anchorSize: [number, number] } {
+  private static isComplete(that: XdgPositioner): that is CompleteXdgPositioner {
     if (!(that.size?.every((v) => v > 0))) return false;
     if (!(that.anchorSize?.every((v) => v >= 0))) return false;
 
@@ -287,6 +298,247 @@ export class XdgPositioner extends BaseObject {
 
     return result;
   }
+
+  // Begin AI-generated code.
+  // What this means is that I'm getting impatient and want to move on to something else than
+  // dealing with areas and theoretical stuff.
+  // Sorry to disappoint :')
+  // (spent a good amount of time to try to guide it properly too, hopefully that works as it should)
+  // ((TODO: Make a test suite))
+  private cloneFromTo(r: FromTo): FromTo {
+    return { from: [r.from[0], r.from[1]], to: [r.to[0], r.to[1]] };
+  }
+
+  private rectWidth(r: FromTo): number {
+    return r.to[1] - r.from[1];
+  }
+
+  private rectHeight(r: FromTo): number {
+    return r.to[0] - r.from[0];
+  }
+
+  private rectContains(a: FromTo, b: FromTo): boolean {
+    return b.from[0] >= a.from[0] && b.to[0] <= a.to[0] && b.from[1] >= a.from[1] && b.to[1] <= a.to[1];
+  }
+
+  private rectIntersect(a: FromTo, b: FromTo): FromTo | null {
+    const top = Math.max(a.from[0], b.from[0]);
+    const left = Math.max(a.from[1], b.from[1]);
+    const bottom = Math.min(a.to[0], b.to[0]);
+    const right = Math.min(a.to[1], b.to[1]);
+    if (bottom <= top || right <= left) return null;
+    return { from: [top, left], to: [bottom, right] };
+  }
+
+  private rectSubtract(rect: FromTo, sub: FromTo): FromTo[] {
+    const inter = this.rectIntersect(rect, sub);
+    if (!inter) return [this.cloneFromTo(rect)];
+
+    const [top, left, bottom, right] = [rect.from[0], rect.from[1], rect.to[0], rect.to[1]];
+    const [sTop, sLeft, sBottom, sRight] = [sub.from[0], sub.from[1], sub.to[0], sub.to[1]];
+    const out: FromTo[] = [];
+
+    if (sTop > top) out.push({ from: [top, left], to: [Math.min(sTop, bottom), right] });
+    if (sBottom < bottom) out.push({ from: [Math.max(sBottom, top), left], to: [bottom, right] });
+
+    const midTop = Math.max(top, sTop);
+    const midBottom = Math.min(bottom, sBottom);
+    if (sLeft > left && midBottom > midTop)
+      out.push({ from: [midTop, left], to: [midBottom, Math.min(sLeft, right)] });
+    if (sRight < right && midBottom > midTop)
+      out.push({ from: [midTop, Math.max(sRight, left)], to: [midBottom, right] });
+
+    return out;
+  }
+
+  computeAllowedRects(outputBounds: FromTo, struts: FromTo[]): FromTo[] {
+    let allowed: FromTo[] = [this.cloneFromTo(outputBounds)];
+    for (const s of struts) {
+      const next: FromTo[] = [];
+      for (const a of allowed) {
+        const pieces = this.rectSubtract(a, s);
+        for (const p of pieces)
+          if (this.rectWidth(p) > 0 && this.rectHeight(p) > 0) next.push(p);
+      }
+      allowed = next;
+      if (allowed.length === 0) break;
+    }
+    return allowed;
+  }
+
+  private fitsInAnyAllowed(rect: FromTo, allowed: FromTo[]): boolean {
+    return allowed.some(a => this.rectContains(a, rect));
+  }
+
+  private flipAnchorName(
+    anchor: typeof dirsAndCornsAndNone[number] | undefined,
+    flipX: boolean,
+    flipY: boolean
+  ): typeof dirsAndCornsAndNone[number] | undefined {
+    if (!anchor) return undefined;
+    const parts = anchor === "none" ? ["none"] : anchor.split("_");
+    let vert: string | null = null;
+    let horiz: string | null = null;
+
+    for (const p of parts) {
+      if (p === "top" || p === "bottom") vert = p;
+      if (p === "left" || p === "right") horiz = p;
+    }
+
+    if (flipY) vert = vert === "top" ? "bottom" : vert === "bottom" ? "top" : vert;
+    if (flipX) horiz = horiz === "left" ? "right" : horiz === "right" ? "left" : horiz;
+
+    if (vert && horiz) return (vert + "_" + horiz) as typeof dirsAndCornsAndNone[number];
+    if (vert) return vert as typeof dirsAndCornsAndNone[number];
+    if (horiz) return horiz as typeof dirsAndCornsAndNone[number];
+    return "none";
+  }
+
+  tryFlips(outputAllowed: FromTo[]): FromTo | null {
+    const flipXAllowed = this.constraintAdjustment.has("flip_x");
+    const flipYAllowed = this.constraintAdjustment.has("flip_y");
+    const combos: Array<[boolean, boolean]> = [];
+
+    if (flipXAllowed) combos.push([true, false]);
+    if (flipYAllowed) combos.push([false, true]);
+    if (flipXAllowed && flipYAllowed) combos.push([true, true]);
+
+    for (const [fx, fy] of combos) {
+      const anchorName = this.flipAnchorName(this.anchor, fx, fy);
+      const gravityName = this.flipAnchorName(this.gravity, fx, fy);
+      const candidate = this.unboundedPosition(anchorName, gravityName);
+      if (this.fitsInAnyAllowed(candidate, outputAllowed)) return candidate;
+    }
+
+    return null;
+  }
+
+  private slideAlongAxis(original: FromTo, axis: "x" | "y", allowed: FromTo[]): FromTo | null {
+    const size = axis === "x" ? this.rectWidth(original) : this.rectHeight(original);
+    const origCenter = axis === "x"
+      ? (original.from[1] + original.to[1]) / 2
+      : (original.from[0] + original.to[0]) / 2;
+
+    const positions: number[] = [];
+    for (const a of allowed) {
+      const min = axis === "x" ? a.from[1] : a.from[0];
+      const max = axis === "x" ? a.to[1] - size : a.to[0] - size;
+      if (min <= max) {
+        positions.push(min, max);
+        const origPos = axis === "x" ? original.from[1] : original.from[0];
+        positions.push(Math.min(Math.max(origPos, min), max));
+      }
+    }
+
+    positions.sort((a, b) => Math.abs(a - origCenter) - Math.abs(b - origCenter));
+    for (const pos of new Set(positions)) {
+      const shifted = this.cloneFromTo(original);
+      if (axis === "x") {
+        shifted.from[1] = pos;
+        shifted.to[1] = pos + size;
+      } else {
+        shifted.from[0] = pos;
+        shifted.to[0] = pos + size;
+      }
+      if (this.fitsInAnyAllowed(shifted, allowed)) return shifted;
+    }
+
+    return null;
+  }
+
+  trySlide(outputAllowed: FromTo[]): FromTo | null {
+    const original = this.unboundedPosition();
+    const slideX = this.constraintAdjustment.has("slide_x");
+    const slideY = this.constraintAdjustment.has("slide_y");
+    if (!slideX && !slideY) return null;
+
+    let xResult: FromTo | null = original;
+    let yResult: FromTo | null = original;
+
+    if (slideX) xResult = this.slideAlongAxis(original, "x", outputAllowed);
+    if (slideY) yResult = this.slideAlongAxis(original, "y", outputAllowed);
+
+    if (slideX && slideY) {
+      if (xResult && yResult) {
+        const combined = this.cloneFromTo(original);
+        combined.from[1] = xResult.from[1];
+        combined.to[1] = xResult.to[1];
+        combined.from[0] = yResult.from[0];
+        combined.to[0] = yResult.to[0];
+        if (this.fitsInAnyAllowed(combined, outputAllowed)) return combined;
+        if (this.fitsInAnyAllowed(xResult, outputAllowed)) return xResult;
+        if (this.fitsInAnyAllowed(yResult, outputAllowed)) return yResult;
+      }
+      return null;
+    }
+
+    return slideX ? xResult : yResult;
+  }
+
+  tryResize(outputAllowed: FromTo[]): FromTo | null {
+    const original = this.unboundedPosition();
+    const resizeX = this.constraintAdjustment.has("resize_x");
+    const resizeY = this.constraintAdjustment.has("resize_y");
+    if (!resizeX && !resizeY) return null;
+
+    const resized = this.cloneFromTo(original);
+    let changed = false;
+
+    if (resizeX) {
+      const best = outputAllowed.reduce(
+        (a, b) => (this.rectWidth(b) > this.rectWidth(a) ? b : a),
+        outputAllowed[0]
+      );
+      const curW = this.rectWidth(resized);
+      const maxW = this.rectWidth(best);
+      if (curW > maxW) {
+        const cx = (resized.from[1] + resized.to[1]) / 2;
+        const left = Math.max(best.from[1], Math.min(cx - maxW / 2, best.to[1] - maxW));
+        resized.from[1] = left;
+        resized.to[1] = left + maxW;
+        changed = true;
+      }
+    }
+
+    if (resizeY) {
+      const best = outputAllowed.reduce(
+        (a, b) => (this.rectHeight(b) > this.rectHeight(a) ? b : a),
+        outputAllowed[0]
+      );
+      const curH = this.rectHeight(resized);
+      const maxH = this.rectHeight(best);
+      if (curH > maxH) {
+        const cy = (resized.from[0] + resized.to[0]) / 2;
+        const top = Math.max(best.from[0], Math.min(cy - maxH / 2, best.to[0] - maxH));
+        resized.from[0] = top;
+        resized.to[0] = top + maxH;
+        changed = true;
+      }
+    }
+
+    return changed && this.fitsInAnyAllowed(resized, outputAllowed) ? resized : null;
+  }
+
+  positionWithinOutputAndStruts(outputBounds: FromTo, struts: FromTo[]): FromTo | null {
+    if (!XdgPositioner.isComplete(this)) throw new Error("Indeterminate.");
+    const allowed = this.computeAllowedRects(outputBounds, struts);
+    if (allowed.length === 0) return null;
+
+    const original = this.unboundedPosition();
+    if (this.fitsInAnyAllowed(original, allowed)) return original;
+
+    const flip = this.tryFlips(allowed);
+    if (flip) return flip;
+
+    const slide = this.trySlide(allowed);
+    if (slide) return slide;
+
+    const resize = this.tryResize(allowed);
+    if (resize) return resize;
+
+    return null;
+  }
+  // End AI-generated code.
 
   // "The compositor may use this information together with set_parent_size to determine what future state the popup should be constrained using."
   // Nah, im good.

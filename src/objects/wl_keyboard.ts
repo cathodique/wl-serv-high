@@ -8,8 +8,7 @@ import { promises as fsp } from "fs";
 import { FileHandle } from "fs/promises";
 import { WlSeat } from "./wl_seat.js";
 import { randomUUID } from "crypto";
-import { interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
-import { HLConnection } from "../index.js";
+import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
 
 type KeyboardServerToClient = { 'edit_keymap': [] };
 export type KeyboardEventServer = EventServer<KeyboardServerToClient, {}>;

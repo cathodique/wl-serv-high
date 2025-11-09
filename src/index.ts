@@ -9,12 +9,6 @@ import { SerialAuthority } from "./lib/serialAuthority";
 import { readdir } from "node:fs/promises";
 import { WlDisplay } from "./objects/wl_display";
 
-const getStackTrace = function() {
-  const obj: Record<string, string> = {};
-  Error.captureStackTrace(obj, getStackTrace);
-  return obj.stack;
-};
-
 export type ObjectMetadata = {
   wl_registry: WlRegistryMetadata;
   wl_keyboard: WlKeyboardMetadata;
@@ -30,14 +24,6 @@ export class HLCompositor extends Compositor<BaseObject, HLConnection> {
       socketPath: '',
       createConnection(this: Compositor<BaseObject, HLConnection>, connId: number, socket: USocket) {
         return new HLConnection(connId, this as HLCompositor, socket, {
-          // createObjRef(this: HLConnection, args, ifaceName, newOid, parent, version) {
-          //   const isIn = (ifaceName: string): ifaceName is keyof typeof newIdMap => Object.hasOwn(newIdMap, ifaceName);
-          //   if (!isIn(ifaceName)) {
-          //     // console.log(ifaceName);
-          //     throw new Error("Inexistant interface name in newIdMap");
-          //   }
-          //   return new newIdMap[ifaceName](this, args, ifaceName, newOid, parent, version);
-          // },
           call(object, fnName, args) {
             const methodCollection = object as unknown as Record<string, ((args: Record<string, any>) => any)>;
             object.emit(`before${fnName[0].toUpperCase()}${fnName.slice(1)}`, args);
@@ -57,7 +43,7 @@ export class HLCompositor extends Compositor<BaseObject, HLConnection> {
 
     const lastInUse = Math.max(...(await readdir(xdgRuntimeDir))
       .filter((v) => v.match(/^wayland-\d+$/))
-      .map((v) => Number(v.slice('wayland-'.length)))); // Look im tired ok.
+      .map((v) => Number(v.slice('wayland-'.length))), 0); // Look im tired ok.
 
     this.params.socketPath = `${process.env.XDG_RUNTIME_DIR}/wayland-${lastInUse + 1}`;
 

@@ -1,11 +1,20 @@
 import { NewObjectDescriptor } from "@cathodique/wl-serv-low";
 import { BaseObject } from "./base_object.js";
 import { XdgSurface } from "./xdg_surface.js";
-import { XdgPositioner } from "./xdg_positioner.js";
+import { FromTo, XdgPositioner } from "./xdg_positioner.js";
 
 interface XdgPopupArgs {
   parent?: XdgSurface;
   positioner: XdgPositioner;
+}
+
+function fromToToYXHW (fromTo: FromTo) {
+  const smallY = Math.min(fromTo.from[0], fromTo.to[0]);
+  const bigY = Math.max(fromTo.from[0], fromTo.to[0]);
+  const smallX = Math.min(fromTo.from[1], fromTo.to[1]);
+  const bigX = Math.max(fromTo.from[1], fromTo.to[1]);
+
+  return [smallY, smallX, bigY - smallY, bigX - smallX];
 }
 
 export class XdgPopup extends BaseObject {
@@ -23,8 +32,12 @@ export class XdgPopup extends BaseObject {
     this.parent.role = "popup";
     this.parent.surface.setRole("popup");
 
-    // EASY TODO: Retrieve that automatically (from positioner or sth idk)
-    this.addCommand('configure', { width: 600, height: 600, x: 0, y: 0 });
+    // TODO: Fetch bounding box from parent
+    const positionerFromTo = args.positioner.positionInBox([0, 0], [1024, 1024]);
+
+    const [y, x, w, h] = fromToToYXHW(positionerFromTo);
+
+    this.addCommand('configure', { width: w, height: h, x: x, y: y });
     this.parent.addCommand('configure', { serial: this.parent.newSerial() });
   }
   get renderReady() {

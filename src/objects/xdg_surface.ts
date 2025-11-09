@@ -1,5 +1,4 @@
 import { NewObjectDescriptor } from "@cathodique/wl-serv-low";
-import { HLConnection } from "../index.js";
 import { DoubleBuffer } from "../lib/doublebuffer.js";
 import { BaseObject } from "./base_object.js";
 import { WlSurface } from "./wl_surface.js";
@@ -83,7 +82,6 @@ export class XdgSurface extends BaseObject {
   wlGetPopup(args: { id: NewObjectDescriptor, parent: XdgSurface, positioner: XdgPositioner }) {
     this.role = "popup";
 
-    // TODO: git refactor-object-creation : Create object
     this.popup = new XdgPopup(args.id, { parent: args.parent, positioner: args.positioner });
     this.connection.createObject(this.popup);
   }

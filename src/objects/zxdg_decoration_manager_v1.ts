@@ -21,6 +21,8 @@ export class ZxdgToplevelDecorationV1 extends BaseObject {
     this.xdgToplevel = toplevel;
     if (this.xdgToplevel.decoration) throw this.raiseError('already_constructed');
     this.xdgToplevel.decoration = this;
+
+    this.sendToplevelDecoration('server_side');
   }
 
   sendToplevelDecoration(mode: 'client_side' | 'server_side') {

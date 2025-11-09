@@ -1,8 +1,7 @@
-import { interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
-import { HLConnection } from "../index.js";
+import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
 import { BaseObject } from "./base_object.js";
 import { XdgSurface } from "./xdg_surface.js";
-import { ZxdgDecorationManagerV1, ZxdgToplevelDecorationV1 } from "./zxdg_decoration_manager_v1.js";
+import { ZxdgToplevelDecorationV1 } from "./zxdg_decoration_manager_v1.js";
 import { EventEmitter } from "node:stream";
 
 const anyValue = <T>(s: Set<T> | Map<any, T>): T | undefined => s.values().next().value;

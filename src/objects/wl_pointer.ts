@@ -1,9 +1,6 @@
-import { NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
+import { NewObjectDescriptor } from "@cathodique/wl-serv-low";
 import { BaseObject } from "./base_object.js";
-import { WlSeat } from "./wl_seat.js";
 import { WlSurface } from "./wl_surface.js";
-import { HLConnection } from "../index.js";
-
 
 export class WlPointer extends BaseObject {
   currentSurface?: WlSurface;
