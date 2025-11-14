@@ -15,10 +15,10 @@ export class WlDisplay extends BaseObject {
   seatRegistry: SeatRegistry;
 
   outputRegistryOnAdd(config: OutputConfiguration) {
-    this.outputRegistry.get(config)!.create(this.connection);
+    this.outputRegistry.get(config)!.createInstances(this.connection);
   }
   seatRegistryOnAdd(config: SeatConfiguration) {
-    this.seatRegistry.get(config)!.create(this.connection);
+    this.seatRegistry.get(config)!.createInstances(this.connection);
   }
 
   constructor(initCtx: NewObjectDescriptorWithConx) {
@@ -31,8 +31,16 @@ export class WlDisplay extends BaseObject {
     //   this.outputAuthorities.set(output, outputAuth);
     // }
     this.outputRegistry = regMeta.outputs;
+    this.outputRegistry.on('add', this.outputRegistryOnAdd);
+    for (const authority of this.outputRegistry.authorityMap.values()) {
+      authority.createInstances(this.connection);
+    }
 
     this.seatRegistry = regMeta.seats;
+    this.seatRegistry.on('add', this.seatRegistryOnAdd);
+    for (const authority of this.seatRegistry.authorityMap.values()) {
+      authority.createInstances(this.connection);
+    }
   }
 
   wlSync(args: { callback: NewObjectDescriptor }) {
@@ -48,7 +56,7 @@ export class WlDisplay extends BaseObject {
   }
 
   wlDestroy(): void {
-    this.outputRegistry.on('add', this.outputRegistryOnAdd);
-    this.seatRegistry.on('add', this.seatRegistryOnAdd);
+    this.outputRegistry.off('add', this.outputRegistryOnAdd);
+    this.seatRegistry.off('add', this.seatRegistryOnAdd);
   }
 }

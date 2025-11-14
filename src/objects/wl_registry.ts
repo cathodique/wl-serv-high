@@ -50,7 +50,7 @@ export class WlRegistry extends BaseObject {
 
   contents: (string | null)[] = [...WlRegistry.baseRegistry];
 
-  latestRegistryName = this.contents.length - 1;
+  latestRegistryName = WlRegistry.baseRegistry.length - 1;
   getRegistryName() {
     this.latestRegistryName += 1;
     return this.latestRegistryName;
@@ -98,6 +98,8 @@ export class WlRegistry extends BaseObject {
     // if (conx.registry) return conx.registry;
     super(initCtx);
 
+    console.log('aaa');
+
     this.outputRegistry = this.connection.display.outputRegistry;
     for (const outputAuth of this.outputRegistry.authorityMap.keys()) {
       const nextIdx = this.getRegistryName();
@@ -115,6 +117,8 @@ export class WlRegistry extends BaseObject {
     }
     this.seatRegistry.on('add', this.seatRegistryOnAdd);
     this.seatRegistry.on('del', this.seatRegistryOnDelete);
+
+    console.log(this.contents);
 
     for (const numericName in this.contents) {
       const name = this.contents[numericName];

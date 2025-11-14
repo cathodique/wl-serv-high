@@ -6,9 +6,10 @@ import { WlSubsurface } from "./wl_subsurface.js";
 import { DoubleBuffer } from "../lib/doublebuffer.js";
 import { XdgSurface } from "./xdg_surface.js";
 import { NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
-import { OutputAuthority, OutputConfiguration, WlOutput } from "./wl_output.js";
+import { OutputConfiguration, WlOutput } from "./wl_output.js";
 import { SeatConfiguration, WlSeat } from "./wl_seat.js";
 import { WlDataDevice } from "./wl_data_device.js";
+import { OutputInstances } from "../registries/output.js";
 
 interface KeyboardEvents extends Record<string, any[]> {
   keyDown: [SeatConfiguration, number];
@@ -64,10 +65,10 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
     super(initCtx);
   }
 
-  outputs: Set<OutputAuthority> = new Set();
-  currentOutput?: OutputAuthority;
+  outputs: Set<OutputInstances> = new Set();
+  currentOutput?: OutputInstances;
   shown(output: OutputConfiguration) {
-    const outputAuth = this.connection.display.outputAuthorities.get(output)!;
+    const outputAuth = this.connection.display.outputRegistry.get(output)!.get(this.connection)!;
     this.outputs.add(outputAuth);
 
     const dataDevices = (this.connection.instances.get('wl_data_device') as WlDataDevice[] | undefined);

@@ -3,15 +3,16 @@ import { HLConnection } from "..";
 import { BaseObject } from "../objects/base_object";
 
 // An object registry encapsulates every Authority and their Config
-export class ObjectRegistry<Authority, Config> extends EventEmitter<{ 'add': [Config]; 'del': [Config, Authority] }> {
+export class ObjectRegistry<This, Authority, Config> extends EventEmitter<{ 'add': [Config]; 'del': [Config, Authority] }> {
   authorityMap: Map<Config, Authority>;
   constructor(authorityMap: Map<Config, Authority> = new Map()) {
     super();
     this.authorityMap = authorityMap;
   }
 
-  addAuthority(config: Config, authority: Authority) {
-    this.authorityMap.set(config, authority);
+  authorityCtor: new (registry: This, config: Config) => Authority = null as unknown as new (registry: This, config: Config) => Authority;
+  addAuthority(config: Config) {
+    this.authorityMap.set(config, new this.authorityCtor(this as unknown as This, config));
     this.emit("add", config);
   }
   removeAuthority(config: Config) {
@@ -27,7 +28,7 @@ export class ObjectRegistry<Authority, Config> extends EventEmitter<{ 'add': [Co
 }
 
 // An object authority encapsulates everything related to a Config, indiscriminately of HLConnection
-export class ObjectAuthority<This, Instances, Registry extends ObjectRegistry<This, Config>, Config> {
+export class ObjectAuthority<This, Instances, Registry extends ObjectRegistry<Registry, This, Config>, Config> {
   config: Config;
   registry: Registry;
   instancesMap: Map<HLConnection, Instances> = new Map();
@@ -39,9 +40,9 @@ export class ObjectAuthority<This, Instances, Registry extends ObjectRegistry<Th
   get(conx: HLConnection) {
     return this.instancesMap.get(conx);
   }
-  create(conx: HLConnection) {
-    throw new Error("Needs to be overridden because JS lacks stuff");
-    // return this.instancesMap.set(conx, new ObjectInstances(this, conx));
+  instancesCtor: new (auth: This, conx: HLConnection) => Instances = null as unknown as new (auth: This, config: HLConnection) => Instances;
+  createInstances(conx: HLConnection) {
+    return this.instancesMap.set(conx, new this.instancesCtor(this as unknown as This, conx));
   }
   delete(conx: HLConnection) {
     return this.instancesMap.delete(conx);
@@ -49,7 +50,7 @@ export class ObjectAuthority<This, Instances, Registry extends ObjectRegistry<Th
 }
 
 // An object instance encapsulates every WlObject in an HLConnection related to a Config
-export class ObjectInstances<This, WlObjects extends BaseObject, Authority extends ObjectAuthority<Authority, This, Registry, Config>, Registry extends ObjectRegistry<Authority, Config>, Config> {
+export class ObjectInstances<This, WlObjects extends BaseObject, Authority extends ObjectAuthority<Authority, This, Registry, Config>, Registry extends ObjectRegistry<Registry, Authority, Config>, Config> {
   config: Config;
   connection: HLConnection;
   authority: Authority;

@@ -71,7 +71,7 @@ export class XdgToplevel extends BaseObject {
 
   configureSequence(window: boolean, capabilities: boolean) {
     // TODO: Let DE configure which default output to use
-    const defaultOutput = anyValue(this.connection.display.outputAuthorities)!.config;
+    const defaultOutput = anyValue(this.connection.display.outputRegistry.authorityMap)!.config;
     const currentOutput = anyValue(this.parent.surface.outputs)?.config || defaultOutput;
 
     // TODO: Retrieve that automatically (from config or sth idk)

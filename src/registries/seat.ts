@@ -2,14 +2,13 @@ import { interfaces } from "@cathodique/wl-serv-low";
 import { SeatConfiguration, WlSeat } from "../objects/wl_seat";
 import { ObjectAuthority, ObjectInstances, ObjectRegistry } from "./objectRegistry";
 import { WlSurface } from "../objects/wl_surface";
-import { HLConnection } from "..";
 
-export class SeatRegistry extends ObjectRegistry<SeatAuthority, SeatConfiguration> {}
+export class SeatRegistry extends ObjectRegistry<SeatRegistry, SeatAuthority, SeatConfiguration> {
+  authorityCtor = SeatAuthority;
+}
 
 export class SeatAuthority extends ObjectAuthority<SeatAuthority, SeatInstances, SeatRegistry, SeatConfiguration> {
-  create(conx: HLConnection) {
-    return this.instancesMap.set(conx, new SeatInstances(this, conx));
-  }
+  instancesCtor = SeatInstances;
 }
 
 export class SeatInstances extends ObjectInstances<SeatInstances, WlSeat, SeatAuthority, SeatRegistry, SeatConfiguration> {
