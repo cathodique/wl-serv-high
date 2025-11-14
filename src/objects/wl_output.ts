@@ -1,9 +1,6 @@
+import { OutputInstances } from "../registries/output.js";
 import { BaseObject } from "./base_object.js";
 import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
-import { ObjectAuthority } from "../lib/objectAuthority.js";
-
-export class OutputAuthority extends ObjectAuthority<WlOutput, OutputConfiguration> {
-}
 
 export interface OutputConfiguration {
   x: number;
@@ -16,14 +13,14 @@ export interface OutputConfiguration {
 
 export class WlOutput extends BaseObject {
   info: OutputConfiguration;
-  authority: OutputAuthority;
+  outputInstances: OutputInstances;
 
   constructor(initCtx: NewObjectDescriptor, outputName: number) {
     super(initCtx);
 
-    this.authority = this.registry!.outputAuthoritiesByName.get(outputName)!;
-    this.authority.bind(this);
-    this.info = this.authority.config;
+    this.info = this.registry!.outputConfigByName.get(outputName)!;
+    this.outputInstances = this.registry!.outputRegistry.get(this.info)!.get(this.connection)!;
+    this.outputInstances.bind(this);
 
     this.advertise();
   }

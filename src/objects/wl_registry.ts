@@ -1,17 +1,19 @@
 import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
 import { BaseObject } from "./base_object.js";
-import { OutputAuthority, OutputConfiguration, WlOutput } from "./wl_output.js";
-import { SeatAuthority, SeatConfiguration, WlSeat } from "./wl_seat.js";
+import { OutputConfiguration, WlOutput } from "./wl_output.js";
+import { SeatConfiguration, WlSeat } from "./wl_seat.js";
 import { WlCompositor } from "./wl_compositor.js";
 import { WlSubcompositor } from "./wl_subcompositor.js";
 import { WlShm } from "./wl_shm.js";
 import { WlDataDeviceManager } from "./wl_data_device_manager.js";
 import { XdgWmBase } from "./xdg_wm_base.js";
 import { ZxdgDecorationManagerV1 } from "./zxdg_decoration_manager_v1.js";
+import { OutputRegistry } from "../registries/output.js";
+import { SeatRegistry } from "../registries/seat.js";
 
 export interface WlRegistryMetadata {
-  outputs: OutputConfiguration[];
-  seats: SeatConfiguration[];
+  outputs: OutputRegistry;
+  seats: SeatRegistry;
 }
 
 const newIdMap = {
@@ -48,25 +50,71 @@ export class WlRegistry extends BaseObject {
 
   contents: (string | null)[] = [...WlRegistry.baseRegistry];
 
-  // TODO: Dynamic seat/output removal/creation.
-  outputAuthoritiesByName: Map<number, OutputAuthority> = new Map();
-  seatAuthoritiesByName: Map<number, SeatAuthority> = new Map();
+  latestRegistryName = this.contents.length - 1;
+  getRegistryName() {
+    this.latestRegistryName += 1;
+    return this.latestRegistryName;
+  }
+
+  outputRegistry: OutputRegistry;
+  outputConfigByName = new Map<number, OutputConfiguration>();
+  outputRegistryOnAdd(config: OutputConfiguration) {
+    const name = this.getRegistryName();
+    this.outputConfigByName.set(name, config);
+
+    this.contents[name] = 'wl_output';
+  }
+  outputRegistryOnDelete(config: OutputConfiguration) {
+    for (const [name, configInMap] of this.outputConfigByName.entries()) {
+      if (configInMap === config) {
+        this.contents[name] = null;
+        this.outputConfigByName.delete(name);
+
+        return;
+      }
+    }
+  }
+
+  seatRegistry: SeatRegistry;
+  seatConfigByName = new Map<number, SeatConfiguration>();
+  seatRegistryOnAdd(config: SeatConfiguration) {
+    const name = this.getRegistryName();
+    this.seatConfigByName.set(name, config);
+
+    this.contents[name] = 'wl_seat';
+  }
+  seatRegistryOnDelete(config: SeatConfiguration) {
+    for (const [name, configInMap] of this.seatConfigByName.entries()) {
+      if (configInMap === config) {
+        this.contents[name] = null;
+        this.seatConfigByName.delete(name);
+
+        return;
+      }
+    }
+  }
 
   constructor(initCtx: NewObjectDescriptor) {
     // if (conx.registry) return conx.registry;
     super(initCtx);
 
-    for (const outputAuth of this.connection.display.outputAuthorities.values()) {
-      const nextIdx = this.contents.length;
+    this.outputRegistry = this.connection.display.outputRegistry;
+    for (const outputAuth of this.outputRegistry.authorityMap.keys()) {
+      const nextIdx = this.getRegistryName();
       this.contents[nextIdx] = 'wl_output';
-      this.outputAuthoritiesByName.set(nextIdx, outputAuth);
+      this.outputConfigByName.set(nextIdx, outputAuth);
     }
+    this.outputRegistry.on('add', this.outputRegistryOnAdd);
+    this.outputRegistry.on('del', this.outputRegistryOnDelete);
 
-    for (const seatAuth of this.connection.display.seatAuthorities.values()) {
-      const nextIdx = this.contents.length;
+    this.seatRegistry = this.connection.display.seatRegistry;
+    for (const seatAuth of this.seatRegistry.authorityMap.keys()) {
+      const nextIdx = this.getRegistryName();
       this.contents[nextIdx] = 'wl_seat';
-      this.seatAuthoritiesByName.set(nextIdx, seatAuth);
+      this.seatConfigByName.set(nextIdx, seatAuth);
     }
+    this.seatRegistry.on('add', this.seatRegistryOnAdd);
+    this.seatRegistry.on('del', this.seatRegistryOnDelete);
 
     for (const numericName in this.contents) {
       const name = this.contents[numericName];
@@ -76,12 +124,12 @@ export class WlRegistry extends BaseObject {
     }
   }
 
-  // wlDestroy(): void {
-  //   const regMeta = this.connection.hlCompositor.metadata.wl_registry;
-
-  //   regMeta.outputs.unapplyTo(this);
-  //   regMeta.seats.unapplyTo(this);
-  // }
+  wlDestroy(): void {
+    this.outputRegistry.off('add', this.outputRegistryOnAdd);
+    this.outputRegistry.off('del', this.outputRegistryOnDelete);
+    this.seatRegistry.off('add', this.seatRegistryOnAdd);
+    this.seatRegistry.off('del', this.seatRegistryOnDelete);
+  }
 
   wlBind(args: { id: NewObjectDescriptor, name: number }) {
     const ifaceName = args.id.type;
