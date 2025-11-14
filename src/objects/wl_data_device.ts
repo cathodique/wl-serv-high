@@ -40,6 +40,7 @@ export class WlDataDevice extends BaseObject {
         oid: newOid,
         type: 'wl_data_offer',
         parent: this,
+        connection: this.connection,
       },
       { mimeType: 'text/plain;charset=utf-8' },
     );
