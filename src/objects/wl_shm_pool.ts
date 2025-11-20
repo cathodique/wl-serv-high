@@ -18,15 +18,15 @@ export class WlShmPool extends BaseObject {
   constructor(initCtx: NewObjectDescriptor, args: WlShmPoolArgs) {
     super(initCtx);
 
-    const readwrite = (mmap.PROT_READ | mmap.PROT_WRITE) as 3;
-    this.bufferId = mmap.map(args.size, readwrite, mmap.MAP_SHARED, args.fd);
+    const readwrite = (mmap.default.PROT_READ | mmap.default.PROT_WRITE) as 3;
+    this.bufferId = mmap.default.map(args.size, readwrite, mmap.default.MAP_SHARED, args.fd);
     this.meta = args;
   }
 
   wlResize(args: Record<string, any>) {
-    mmap.unmap(this.bufferId);
+    mmap.default.unmap(this.bufferId);
     this.meta.size = args.size;
-    this.bufferId = mmap.map(this.meta.size, mmap.PROT_READ, mmap.MAP_SHARED, this.meta.fd, 0);
+    this.bufferId = mmap.default.map(this.meta.size, mmap.default.PROT_READ, mmap.default.MAP_SHARED, this.meta.fd, 0);
   }
 
   wlCreateBuffer(args: { id: NewObjectDescriptor, offset: number, width: number, height: number, stride: number, format: number }) {

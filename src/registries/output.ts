@@ -1,6 +1,6 @@
-import { HLConnection } from "..";
-import { OutputConfiguration, WlOutput } from "../objects/wl_output";
-import { ObjectAuthority, ObjectInstances, ObjectRegistry } from "./objectRegistry";
+import { HLConnection } from "../index.js";
+import { OutputConfiguration, WlOutput } from "../objects/wl_output.js";
+import { ObjectAuthority, ObjectInstances, ObjectRegistry } from "./objectRegistry.js";
 
 export class OutputRegistry extends ObjectRegistry<OutputRegistry, OutputAuthority, OutputConfiguration> {
   authorityCtor = OutputAuthority;

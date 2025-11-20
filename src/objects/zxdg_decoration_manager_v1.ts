@@ -1,7 +1,7 @@
 import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
-import { BaseObject } from "./base_object";
-import { XdgToplevel } from "./xdg_toplevel";
-import { XdgSurface } from "./xdg_surface";
+import { BaseObject } from "./base_object.js";
+import { XdgToplevel } from "./xdg_toplevel.js";
+import { XdgSurface } from "./xdg_surface.js";
 
 export class ZxdgDecorationManagerV1 extends BaseObject {
   wlGetToplevelDecoration(args: { id: NewObjectDescriptor, toplevel: XdgToplevel }) {

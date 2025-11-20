@@ -1,7 +1,7 @@
 import { interfaces } from "@cathodique/wl-serv-low";
-import { SeatConfiguration, WlSeat } from "../objects/wl_seat";
-import { ObjectAuthority, ObjectInstances, ObjectRegistry } from "./objectRegistry";
-import { WlSurface } from "../objects/wl_surface";
+import { SeatConfiguration, WlSeat } from "../objects/wl_seat.js";
+import { ObjectAuthority, ObjectInstances, ObjectRegistry } from "./objectRegistry.js";
+import { WlSurface } from "../objects/wl_surface.js";
 
 export class SeatRegistry extends ObjectRegistry<SeatRegistry, SeatAuthority, SeatConfiguration> {
   authorityCtor = SeatAuthority;

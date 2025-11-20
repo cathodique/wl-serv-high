@@ -1,6 +1,6 @@
 import EventEmitter from "events";
-import { HLConnection } from "..";
-import { BaseObject } from "../objects/base_object";
+import { HLConnection } from "../index.js";
+import { BaseObject } from "../objects/base_object.js";
 
 // An object registry encapsulates every Authority and their Config
 export class ObjectRegistry<This, Authority, Config> extends EventEmitter<{ 'add': [Config]; 'del': [Config, Authority] }> {
