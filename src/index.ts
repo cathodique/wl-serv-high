@@ -1,13 +1,13 @@
 import { Compositor, Connection, ConnectionParams } from "@cathodique/wl-serv-low";
-import { WlRegistryMetadata } from "./objects/wl_registry";
-import { WlKeyboardMetadata } from "./objects/wl_keyboard";
+import { WlRegistryMetadata } from "./objects/wl_registry.js";
+import { WlKeyboardMetadata } from "./objects/wl_keyboard.js";
 import { USocket } from "@cathodique/usocket";
-import { Time } from "./lib/time";
-import { BaseObject } from "./objects/base_object";
-import { TickAuthority } from "./lib/tickAuthority";
-import { SerialAuthority } from "./lib/serialAuthority";
+import { Time } from "./lib/time.js";
+import { BaseObject } from "./objects/base_object.js";
+import { TickAuthority } from "./lib/tickAuthority.js";
+import { SerialAuthority } from "./lib/serialAuthority.js";
 import { readdir } from "node:fs/promises";
-import { WlDisplay } from "./objects/wl_display";
+import { WlDisplay } from "./objects/wl_display.js";
 
 export type ObjectMetadata = {
   wl_registry: WlRegistryMetadata;

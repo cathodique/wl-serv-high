@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:stream";
-import { BaseObject } from "../objects/base_object";
+import { BaseObject } from "../objects/base_object.js";
 
 export class DoubleBuffer<T> extends EventEmitter<{ "current": [T] }> {
   _current: T;
