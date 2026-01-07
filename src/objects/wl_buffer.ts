@@ -55,7 +55,7 @@ export class WlBuffer extends BaseObject {
   }
 
   getBufferArea(y: number, x: number, h: number, w: number) {
-    return mmap.default.getbufferarea(
+    return mmap.getbufferarea(
       this.parent.bufferId,
       y,
       x,
@@ -66,7 +66,7 @@ export class WlBuffer extends BaseObject {
     );
   }
   updateBufferArea(y: number, x: number, h: number, w: number) {
-    return mmap.default.updatebufferarea(
+    return mmap.updatebufferarea(
       this.parent.bufferId,
       this.buffer,
       y,

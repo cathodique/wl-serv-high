@@ -8,13 +8,14 @@ import { TickAuthority } from "./lib/tickAuthority.js";
 import { SerialAuthority } from "./lib/serialAuthority.js";
 import { readdir } from "node:fs/promises";
 import { WlDisplay } from "./objects/wl_display.js";
+import { EventEmitter } from "node:events";
 
 export type ObjectMetadata = {
   wl_registry: WlRegistryMetadata;
   wl_keyboard: WlKeyboardMetadata;
 };
 
-export class HLCompositor extends Compositor<BaseObject, HLConnection> {
+export class HLCompositor extends Compositor<BaseObject, HLConnection> implements EventEmitter {
   metadata: ObjectMetadata;
 
   ticks: TickAuthority = new TickAuthority();
