@@ -1,8 +1,15 @@
 {
   "name": "@cathodique/wl-serv-high",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "High level wayland server",
   "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./registries": "./dist/registries/_exports.js",
+    "./objects": "./dist/objects/_exports.js",
+    "./misc": "./dist/misc/_exports.js",
+    "./lib": "./dist/lib/_exports.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -1,6 +1,6 @@
 import { interfaces } from "@cathodique/wl-serv-low";
-import { bitfieldValueToObject } from "../lib/bitfield";
-import { BaseObject } from "./base_object";
+import { bitfieldValueToObject } from "../lib/bitfield.js";
+import { BaseObject } from "./base_object.js";
 
 type Action = "copy" | "move" | "ask";
 type NullableAction = Action | "none";

@@ -24,9 +24,98 @@ const caMap = new Map(Object.entries(cstrAdjEnum.itoa as Record<string, Constrai
 
 // I actually forgot why I made this interface.
 // Re: No you didn't
-export interface FromTo {
+export class FromTo {
   from: [number, number];
   to: [number, number];
+
+  constructor(data: { from: [number, number], to: [number, number] } | FromTo) {
+    this.from = data.from;
+    this.to = data.to;
+  }
+
+  get width(): number {
+    return Math.abs(this.to[1] - this.from[1]);
+  }
+
+  get height(): number {
+    return Math.abs(this.to[0] - this.from[0]);
+  }
+
+  get yxhw() {
+    const y = Math.min(this.from[0], this.to[0]);
+    const x = Math.min(this.from[1], this.to[1]);
+    return {
+      y,
+      x,
+      height: Math.max(this.from[0], this.to[0]) - y,
+      width: Math.max(this.from[1], this.to[1]) - x,
+    };
+  }
+
+  get center(): [number, number] {
+    return [
+      (this.from[0] + this.to[0]) / 2,
+      (this.from[1] + this.to[1]) / 2,
+    ];
+  }
+  centerDistance(other: FromTo) {
+    const xy1 = this.center;
+    const xy2 = other.center;
+    return Math.hypot(xy1[0] - xy2[0], xy1[1] - xy2[1]);
+  }
+
+  contains(other: FromTo) {
+    return other.from[0] >= this.from[0] && other.to[0] <= this.to[0] && other.from[1] >= this.from[1] && other.to[1] <= this.to[1]
+  }
+
+  intersect(other: FromTo): FromTo | null {
+    const top = Math.max(this.from[0], other.from[0]);
+    const left = Math.max(this.from[1], other.from[1]);
+    const bottom = Math.min(this.to[0], other.to[0]);
+    const right = Math.min(this.to[1], other.to[1]);
+    if (bottom <= top || right <= left) return null;
+
+    return new FromTo({ from: [top, left], to: [bottom, right] });
+  }
+
+  subtract(sub: FromTo): FromTo[] {
+    const inter = this.intersect(sub);
+    if (!inter) return [new FromTo(this)];
+
+    const [top, left, bottom, right] = [this.from[0], this.from[1], this.to[0], this.to[1]];
+    const [sTop, sLeft, sBottom, sRight] = [sub.from[0], sub.from[1], sub.to[0], sub.to[1]];
+    const out: FromTo[] = [];
+
+    if (sTop > top) {
+      out.push(new FromTo({
+        from: [top, left],
+        to: [Math.min(sTop, bottom), right],
+      }));
+    }
+    if (sBottom < bottom) {
+      out.push(new FromTo({
+        from: [Math.max(sBottom, top), left],
+        to: [bottom, right],
+      }));
+    }
+
+    const midTop = Math.max(top, sTop);
+    const midBottom = Math.min(bottom, sBottom);
+    if (sLeft > left && midBottom > midTop) {
+      out.push(new FromTo({
+        from: [midTop, left],
+        to: [midBottom, Math.min(sLeft, right)],
+      }));
+    }
+    if (sRight < right && midBottom > midTop) {
+      out.push(new FromTo({
+        from: [midTop, Math.max(sRight, left)],
+        to: [midBottom, right],
+      }));
+    }
+
+    return out;
+  }
 }
 
 // AI-gen
@@ -185,14 +274,14 @@ export class XdgPositioner extends BaseObject {
         break;
     }
 
-    return { from, to };
+    return new FromTo({ from, to });
   }
 
   positionInBox([contY, contX]: [number, number], [contH, contW]: [number, number]) {
     if (!XdgPositioner.isComplete(this)) throw new Error("Indeterminate.");
 
     // let [h, w] = this.size;
-    let result: FromTo = this.unboundedPosition();
+    let result = this.unboundedPosition();
 
     if (!this.constraintAdjustment) return result;
 
@@ -305,60 +394,15 @@ export class XdgPositioner extends BaseObject {
   // Sorry to disappoint :')
   // (spent a good amount of time to try to guide it properly too, hopefully that works as it should)
   // ((TODO: Make a test suite))
-  private cloneFromTo(r: FromTo): FromTo {
-    return { from: [r.from[0], r.from[1]], to: [r.to[0], r.to[1]] };
-  }
-
-  private rectWidth(r: FromTo): number {
-    return r.to[1] - r.from[1];
-  }
-
-  private rectHeight(r: FromTo): number {
-    return r.to[0] - r.from[0];
-  }
-
-  private rectContains(a: FromTo, b: FromTo): boolean {
-    return b.from[0] >= a.from[0] && b.to[0] <= a.to[0] && b.from[1] >= a.from[1] && b.to[1] <= a.to[1];
-  }
-
-  private rectIntersect(a: FromTo, b: FromTo): FromTo | null {
-    const top = Math.max(a.from[0], b.from[0]);
-    const left = Math.max(a.from[1], b.from[1]);
-    const bottom = Math.min(a.to[0], b.to[0]);
-    const right = Math.min(a.to[1], b.to[1]);
-    if (bottom <= top || right <= left) return null;
-    return { from: [top, left], to: [bottom, right] };
-  }
-
-  private rectSubtract(rect: FromTo, sub: FromTo): FromTo[] {
-    const inter = this.rectIntersect(rect, sub);
-    if (!inter) return [this.cloneFromTo(rect)];
-
-    const [top, left, bottom, right] = [rect.from[0], rect.from[1], rect.to[0], rect.to[1]];
-    const [sTop, sLeft, sBottom, sRight] = [sub.from[0], sub.from[1], sub.to[0], sub.to[1]];
-    const out: FromTo[] = [];
-
-    if (sTop > top) out.push({ from: [top, left], to: [Math.min(sTop, bottom), right] });
-    if (sBottom < bottom) out.push({ from: [Math.max(sBottom, top), left], to: [bottom, right] });
-
-    const midTop = Math.max(top, sTop);
-    const midBottom = Math.min(bottom, sBottom);
-    if (sLeft > left && midBottom > midTop)
-      out.push({ from: [midTop, left], to: [midBottom, Math.min(sLeft, right)] });
-    if (sRight < right && midBottom > midTop)
-      out.push({ from: [midTop, Math.max(sRight, left)], to: [midBottom, right] });
-
-    return out;
-  }
 
   computeAllowedRects(outputBounds: FromTo, struts: FromTo[]): FromTo[] {
-    let allowed: FromTo[] = [this.cloneFromTo(outputBounds)];
+    let allowed: FromTo[] = [new FromTo(outputBounds)];
     for (const s of struts) {
       const next: FromTo[] = [];
       for (const a of allowed) {
-        const pieces = this.rectSubtract(a, s);
+        const pieces = a.subtract(s);
         for (const p of pieces)
-          if (this.rectWidth(p) > 0 && this.rectHeight(p) > 0) next.push(p);
+          if (p.width > 0 && p.height > 0) next.push(p);
       }
       allowed = next;
       if (allowed.length === 0) break;
@@ -367,7 +411,7 @@ export class XdgPositioner extends BaseObject {
   }
 
   private fitsInAnyAllowed(rect: FromTo, allowed: FromTo[]): boolean {
-    return allowed.some(a => this.rectContains(a, rect));
+    return allowed.some(a => a.contains(rect));
   }
 
   private flipAnchorName(
@@ -414,7 +458,7 @@ export class XdgPositioner extends BaseObject {
   }
 
   private slideAlongAxis(original: FromTo, axis: "x" | "y", allowed: FromTo[]): FromTo | null {
-    const size = axis === "x" ? this.rectWidth(original) : this.rectHeight(original);
+    const size = axis === "x" ? original.width : original.height;
     const origCenter = axis === "x"
       ? (original.from[1] + original.to[1]) / 2
       : (original.from[0] + original.to[0]) / 2;
@@ -432,7 +476,7 @@ export class XdgPositioner extends BaseObject {
 
     positions.sort((a, b) => Math.abs(a - origCenter) - Math.abs(b - origCenter));
     for (const pos of new Set(positions)) {
-      const shifted = this.cloneFromTo(original);
+      const shifted = new FromTo(original);
       if (axis === "x") {
         shifted.from[1] = pos;
         shifted.to[1] = pos + size;
@@ -460,7 +504,7 @@ export class XdgPositioner extends BaseObject {
 
     if (slideX && slideY) {
       if (xResult && yResult) {
-        const combined = this.cloneFromTo(original);
+        const combined = new FromTo(original);
         combined.from[1] = xResult.from[1];
         combined.to[1] = xResult.to[1];
         combined.from[0] = yResult.from[0];
@@ -481,16 +525,16 @@ export class XdgPositioner extends BaseObject {
     const resizeY = this.constraintAdjustment.has("resize_y");
     if (!resizeX && !resizeY) return null;
 
-    const resized = this.cloneFromTo(original);
+    const resized = new FromTo(original);
     let changed = false;
 
     if (resizeX) {
       const best = outputAllowed.reduce(
-        (a, b) => (this.rectWidth(b) > this.rectWidth(a) ? b : a),
+        (a, b) => (b.width > a.width ? b : a),
         outputAllowed[0]
       );
-      const curW = this.rectWidth(resized);
-      const maxW = this.rectWidth(best);
+      const curW = resized.width;
+      const maxW = best.width;
       if (curW > maxW) {
         const cx = (resized.from[1] + resized.to[1]) / 2;
         const left = Math.max(best.from[1], Math.min(cx - maxW / 2, best.to[1] - maxW));
@@ -502,11 +546,11 @@ export class XdgPositioner extends BaseObject {
 
     if (resizeY) {
       const best = outputAllowed.reduce(
-        (a, b) => (this.rectHeight(b) > this.rectHeight(a) ? b : a),
+        (a, b) => (b.height > a.height ? b : a),
         outputAllowed[0]
       );
-      const curH = this.rectHeight(resized);
-      const maxH = this.rectHeight(best);
+      const curH = resized.height;
+      const maxH = best.height;
       if (curH > maxH) {
         const cy = (resized.from[0] + resized.to[0]) / 2;
         const top = Math.max(best.from[0], Math.min(cy - maxH / 2, best.to[0] - maxH));
@@ -536,7 +580,7 @@ export class XdgPositioner extends BaseObject {
     const resize = this.tryResize(allowed);
     if (resize) return resize;
 
-    return null;
+    return original;
   }
   // End AI-generated code.
 

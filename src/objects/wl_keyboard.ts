@@ -87,7 +87,6 @@ export class WlKeyboard extends BaseObject<KeyboardEvents> {
 
   async announceKeymap() {
     const keymapFd = await this.meta.keymapFd;
-    // console.log(keymapFd);
     this.addCommand('keymap', {
       format: interfaces.wl_keyboard.enums.keymapFormat.atoi.xkb_v1,
       size: this.meta.size,

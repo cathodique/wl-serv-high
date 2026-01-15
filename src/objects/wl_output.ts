@@ -1,15 +1,6 @@
-import { OutputInstances } from "../registries/output.js";
+import { OutputConfiguration, OutputInstances } from "../registries/objectRegistry/output.js";
 import { BaseObject } from "./base_object.js";
 import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
-
-export interface OutputConfiguration {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  effectiveW: number;
-  effectiveH: number;
-}
 
 export class WlOutput extends BaseObject {
   info: OutputConfiguration;

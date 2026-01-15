@@ -2,12 +2,7 @@ import { BaseObject } from "./base_object.js";
 import { WlPointer } from "./wl_pointer.js";
 import { WlKeyboard } from "./wl_keyboard.js";
 import { NewObjectDescriptor } from "@cathodique/wl-serv-low";
-import { SeatInstances } from "../registries/seat.js";
-
-export interface SeatConfiguration {
-  name: string;
-  capabilities: number;
-}
+import { SeatConfiguration, SeatInstances } from "../registries/objectRegistry/seat.js";
 
 export class WlSeat extends BaseObject {
   info: SeatConfiguration;

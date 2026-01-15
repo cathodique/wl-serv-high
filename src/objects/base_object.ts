@@ -1,6 +1,6 @@
 import { interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
-import type { WlRegistry } from "./wl_registry";
-import { HLConnection } from "../index";
+import type { WlRegistry } from "./wl_registry.js";
+import { HLConnection } from "../index.js";
 
 class ImplementationError extends Error {
 
