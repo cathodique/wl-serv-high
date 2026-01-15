@@ -1,19 +1,21 @@
 import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
 import { BaseObject } from "./base_object.js";
-import { OutputConfiguration, WlOutput } from "./wl_output.js";
-import { SeatConfiguration, WlSeat } from "./wl_seat.js";
+import { WlOutput } from "./wl_output.js";
+import { WlSeat } from "./wl_seat.js";
 import { WlCompositor } from "./wl_compositor.js";
 import { WlSubcompositor } from "./wl_subcompositor.js";
 import { WlShm } from "./wl_shm.js";
 import { WlDataDeviceManager } from "./wl_data_device_manager.js";
 import { XdgWmBase } from "./xdg_wm_base.js";
 import { ZxdgDecorationManagerV1 } from "./zxdg_decoration_manager_v1.js";
-import { OutputRegistry } from "../registries/output.js";
-import { SeatRegistry } from "../registries/seat.js";
+import { OutputConfiguration, OutputRegistry } from "../registries/objectRegistry/output.js";
+import { SeatConfiguration, SeatRegistry } from "../registries/objectRegistry/seat.js";
+import { StrutRegistry } from "../registries/conceptRegistry/strut.js";
 
 export interface WlRegistryMetadata {
   outputs: OutputRegistry;
   seats: SeatRegistry;
+  struts: StrutRegistry;
 }
 
 const newIdMap = {
@@ -98,8 +100,6 @@ export class WlRegistry extends BaseObject {
     // if (conx.registry) return conx.registry;
     super(initCtx);
 
-    console.log('aaa');
-
     this.outputRegistry = this.connection.display.outputRegistry;
     for (const outputAuth of this.outputRegistry.authorityMap.keys()) {
       const nextIdx = this.getRegistryName();
@@ -117,8 +117,6 @@ export class WlRegistry extends BaseObject {
     }
     this.seatRegistry.on('add', this.seatRegistryOnAdd);
     this.seatRegistry.on('del', this.seatRegistryOnDelete);
-
-    console.log(this.contents);
 
     for (const numericName in this.contents) {
       const name = this.contents[numericName];

@@ -5,11 +5,11 @@ import { WlCallback } from "./wl_callback.js";
 import { WlSubsurface } from "./wl_subsurface.js";
 import { DoubleBuffer } from "../lib/doublebuffer.js";
 import { XdgSurface } from "./xdg_surface.js";
-import { NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
-import { OutputConfiguration, WlOutput } from "./wl_output.js";
-import { SeatConfiguration, WlSeat } from "./wl_seat.js";
+import { NewObjectDescriptor } from "@cathodique/wl-serv-low";
+import { WlOutput } from "./wl_output.js";
 import { WlDataDevice } from "./wl_data_device.js";
-import { OutputInstances } from "../registries/output.js";
+import { OutputConfiguration, OutputInstances } from "../registries/objectRegistry/output.js";
+import { SeatConfiguration } from "../registries/objectRegistry/seat.js";
 
 interface KeyboardEvents extends Record<string, any[]> {
   keyDown: [SeatConfiguration, number];
@@ -67,17 +67,27 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
 
   outputs: Set<OutputInstances> = new Set();
   currentOutput?: OutputInstances;
-  shown(output: OutputConfiguration) {
-    const outputAuth = this.connection.display.outputRegistry.get(output)!.get(this.connection)!;
-    this.outputs.add(outputAuth);
+  enterOutput(output: OutputConfiguration) {
+    const outputInstances = this.connection.display.outputRegistry.get(output)!.get(this.connection)!;
+    this.outputs.add(outputInstances);
 
+    // ???
     const dataDevices = (this.connection.instances.get('wl_data_device') as WlDataDevice[] | undefined);
     dataDevices?.forEach(function (this: WlSurface, dataDevice: WlDataDevice) {
       dataDevice.surfaceFocusCallback.bind(dataDevice);
     }.bind(this));
 
-    outputAuth.forAll(function (this: WlSurface, wlOutput: WlOutput) {
+    outputInstances.forAll(function (this: WlSurface, wlOutput: WlOutput) {
       this.addCommand('enter', { output: wlOutput });
+      this.connection.sendPending();
+    }.bind(this));
+  }
+  leaveOutput(output: OutputConfiguration) {
+    const outputInstances = this.connection.display.outputRegistry.get(output)!.get(this.connection)!;
+    this.outputs.add(outputInstances);
+
+    outputInstances.forAll(function (this: WlSurface, wlOutput: WlOutput) {
+      this.addCommand('leave', { output: wlOutput });
       this.connection.sendPending();
     }.bind(this));
   }
@@ -138,15 +148,12 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
   }
 
   wlCommit() {
-    console.log('Committing', this.oid);
-
     this.update();
 
     this.emit('update');
 
     if (this.buffer.current) {
       this.buffer.current.addCommand('release', {});
-      console.log('Releasing', this.buffer.current.oid);
 
       this.connection.sendPending();
     }

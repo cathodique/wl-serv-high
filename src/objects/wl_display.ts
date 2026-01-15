@@ -2,16 +2,15 @@ import { WlCallback } from "./wl_callback.js";
 import { BaseObject, NewObjectDescriptorWithConx } from "./base_object.js";
 import { NewObjectDescriptor } from "@cathodique/wl-serv-low";
 import { WlRegistry } from "./wl_registry.js";
-import { OutputAuthority, OutputRegistry } from "../registries/output.js";
-import { SeatAuthority, SeatRegistry } from "../registries/seat.js";
-import { OutputConfiguration } from "./wl_output.js";
-import { SeatConfiguration } from "./wl_seat.js";
+import { OutputConfiguration, OutputRegistry } from "../registries/objectRegistry/output.js";
+import { SeatConfiguration, SeatRegistry } from "../registries/objectRegistry/seat.js";
+import { StrutRegistry } from "../registries/conceptRegistry/strut.js";
 
 export class WlDisplay extends BaseObject {
   _version: number = 1;
 
   outputRegistry: OutputRegistry;
-
+  strutRegistry: StrutRegistry;
   seatRegistry: SeatRegistry;
 
   outputRegistryOnAdd(config: OutputConfiguration) {
@@ -41,6 +40,8 @@ export class WlDisplay extends BaseObject {
     for (const authority of this.seatRegistry.authorityMap.values()) {
       authority.createInstances(this.connection);
     }
+
+    this.strutRegistry = regMeta.struts;
   }
 
   wlSync(args: { callback: NewObjectDescriptor }) {
@@ -48,7 +49,6 @@ export class WlDisplay extends BaseObject {
     this.connection.createObject(callback);
 
     callback.done(1);
-    // console.log('AAAA')
     this.connection.sendPending();
   }
   wlGetRegistry(args: { registry: NewObjectDescriptor }) {
