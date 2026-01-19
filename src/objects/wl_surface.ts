@@ -74,7 +74,7 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
     // ???
     const dataDevices = (this.connection.instances.get('wl_data_device') as WlDataDevice[] | undefined);
     dataDevices?.forEach(function (this: WlSurface, dataDevice: WlDataDevice) {
-      dataDevice.surfaceFocusCallback.bind(dataDevice);
+      dataDevice.surfaceFocusCallback();
     }.bind(this));
 
     outputInstances.forAll(function (this: WlSurface, wlOutput: WlOutput) {
@@ -84,7 +84,7 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
   }
   leaveOutput(output: OutputConfiguration) {
     const outputInstances = this.connection.display.outputRegistry.get(output)!.get(this.connection)!;
-    this.outputs.add(outputInstances);
+    this.outputs.delete(outputInstances);
 
     outputInstances.forAll(function (this: WlSurface, wlOutput: WlOutput) {
       this.addCommand('leave', { output: wlOutput });

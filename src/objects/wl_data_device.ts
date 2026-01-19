@@ -31,9 +31,9 @@ export class WlDataDevice extends BaseObject {
     }.bind(this));
   }
 
-  surfaceFocusCallback(kbd: WlKeyboard) {
+  surfaceFocusCallback() {
     const newOid = this.connection.createServerOid();
-    this.addCommand('dataOffer', { id: { oid: newOid } });
+    this.addCommand('dataOffer', { id: { oid: newOid, connection: this.connection } });
 
     const newKidOid = new WlDataOffer(
       {

@@ -29,7 +29,7 @@ export class WlSubsurface extends BaseObject {
   wlSetSync() { this.isSynced = true }
 
   getRelationWith(surf: WlSurface): Relation {
-    if (this.meta.surface === surf) return "parent";
+    if (this.meta.parent === surf) return "parent";
     if (this.meta.parent.daughterSurfaces.has(surf)) return "sibling";
     return "not_directly_related";
   }

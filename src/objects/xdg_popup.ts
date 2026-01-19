@@ -49,30 +49,30 @@ export class XdgPopup extends BaseObject {
     return true;
   }
 
-  render() {
-    const fromTo = this.#computeFromTo();
+  // render() {
+  //   const fromTo = this.#computeFromTo();
 
-    this.addCommand('configure', fromTo.yxhw);
-    this.parent.addCommand('configure', { serial: this.parent.newSerial() });
-  }
+  //   this.addCommand('configure', fromTo.yxhw);
+  //   this.parent.addCommand('configure', { serial: this.parent.newSerial() });
+  // }
 
-  #computeFromTo() {
-    const positioner = this.meta.positioner;
+  // #computeFromTo() {
+  //   const positioner = this.meta.positioner;
 
-    const original = positioner.unboundedPosition();
-    const closest: [number, FromTo][] = [];
-    // TODO: Fetch bounding box from parent
-    for (const output of this.meta.parent.surface.outputs) {
-      const positionerFromTo = positioner.positionWithinOutputAndStruts(
-        outputToFromTo(output.config),
-        [...this.connection.display.strutRegistry.configSet].map(strutToFromTo),
-      )!;
+  //   const original = positioner.unboundedPosition();
+  //   const closest: [number, FromTo][] = [];
+  //   // TODO: Fetch bounding box from parent
+  //   for (const output of this.meta.parent.surface.outputs) {
+  //     const positionerFromTo = positioner.positionWithinOutputAndStruts(
+  //       outputToFromTo(output.config),
+  //       [...this.connection.display.strutRegistry.configSet].map(strutToFromTo),
+  //     )!;
 
-      closest.push([original.centerDistance(positionerFromTo), positionerFromTo]);
-    }
+  //     closest.push([original.centerDistance(positionerFromTo), positionerFromTo]);
+  //   }
 
-    closest.sort(([a, ], [b, ]) => a - b);
+  //   closest.sort(([a, ], [b, ]) => a - b);
 
-    return closest[0][1];
-  }
+  //   return closest[0][1];
+  // }
 }
