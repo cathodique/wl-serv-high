@@ -2,7 +2,6 @@
 // Think of it as a singleton array of things - still per instance of HLCompositor, ofc, so not purely static.
 
 import { EventEmitter } from "node:events";
-import { makeRecursiveState } from "../../lib/recursivestate";
 
 export class ConceptRegistry<Config extends Record<string | symbol, any>> extends EventEmitter<{ 'add': [Config]; 'del': [Config], 'change': [any[]] }> {
   configSet: Set<Config>;
@@ -12,7 +11,7 @@ export class ConceptRegistry<Config extends Record<string | symbol, any>> extend
   }
 
   addConfig(config: Config) {
-    this.configSet.add(makeRecursiveState(config, this as EventEmitter<{ "change": [ any[] ] }>));
+    this.configSet.add(config);
     this.emit("add", config);
   }
   removeConfig(config: Config) {

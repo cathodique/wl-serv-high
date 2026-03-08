@@ -1,6 +1,5 @@
 import { Compositor, Connection, ConnectionParams } from "@cathodique/wl-serv-low";
 import { WlRegistryMetadata } from "./objects/wl_registry.js";
-import { WlKeyboardMetadata } from "./objects/wl_keyboard.js";
 import { USocket } from "@cathodique/usocket";
 import { Time } from "./lib/time.js";
 import { BaseObject } from "./objects/base_object.js";
@@ -12,7 +11,6 @@ import { EventEmitter } from "node:events";
 
 export type ObjectMetadata = {
   wl_registry: WlRegistryMetadata;
-  wl_keyboard: WlKeyboardMetadata;
 };
 
 export class HLCompositor extends Compositor<BaseObject, HLConnection> implements EventEmitter {

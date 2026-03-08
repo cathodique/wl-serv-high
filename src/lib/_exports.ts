@@ -5,3 +5,4 @@ export * from "./serialAuthority.js";
 export * from "./signalbound.js";
 export * from "./tickAuthority.js";
 export * from "./time.js";
+export * from "./reactive.js";

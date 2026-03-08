@@ -34,7 +34,7 @@ export class WlOutput extends BaseObject {
       height: this.info.h,
       refresh: 60000, // again idrc for now
     });
-    this.addCommand('scale', { factor: 1 });
     this.addCommand('done', {});
+    this.addCommand('scale', { factor: 1 });
   }
 }
