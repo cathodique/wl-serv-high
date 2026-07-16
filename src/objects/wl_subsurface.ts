@@ -16,11 +16,14 @@ export class WlSubsurface extends BaseObject {
   constructor(initCtx: NewObjectDescriptor, args: WlSubsurfaceArgs) {
     super(initCtx);
 
-    this.isSynced = true;
-
     this.meta = args;
     this.meta.surface.subsurface = this;
     this.meta.parent.daughterSurfaces.add(args.surface);
+
+    this.isSynced = true;
+    this.meta.surface.cont.convert("sync");
+
+    this.meta.parent.cont.children.add(this.meta.surface.cont);
 
     this.meta.surface.setRole("subsurface");
   }

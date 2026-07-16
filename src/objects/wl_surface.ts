@@ -3,13 +3,13 @@ import { WlBuffer } from "./wl_buffer.js";
 import { InstructionType, RegRectangle, WlRegion } from "./wl_region.js";
 import { WlCallback } from "./wl_callback.js";
 import { WlSubsurface } from "./wl_subsurface.js";
-import { DoubleBuffer } from "../lib/doublebuffer.js";
 import { XdgSurface } from "./xdg_surface.js";
 import { NewObjectDescriptor } from "@cathodique/wl-serv-low";
 import { WlOutput } from "./wl_output.js";
 import { WlDataDevice } from "./wl_data_device.js";
 import { OutputConfiguration, OutputInstances } from "../registries/objectRegistry/output.js";
 import { SeatConfiguration } from "../registries/objectRegistry/seat.js";
+import { CUCont } from "../lib/content_update.js";
 
 interface KeyboardEvents extends Record<string, any[]> {
   keyDown: [SeatConfiguration, number];
@@ -33,18 +33,19 @@ type SurfaceEvents = KeyboardEvents & PointerEvents & OutputEvents & { updateRol
 // TODO: Have SurfaceRoles be XdgPopup | XdgToplevel | WlPointer | WlSubsurface
 type SurfaceRoles = "cursor" | "toplevel" | "popup" | "subsurface";
 
+
 export class WlSurface extends BaseObject<SurfaceEvents> {
   xdgSurface: XdgSurface | null = null;
   daughterSurfaces: Set<WlSurface> = new Set();
   subsurface: WlSubsurface | null = null;
 
-  opaqueRegions: DoubleBuffer<RegRectangle[]> = new DoubleBuffer([], this);
-  inputRegions: DoubleBuffer<RegRectangle[]> = new DoubleBuffer([], this);
-  surfaceDamage: DoubleBuffer<RegRectangle[]> = new DoubleBuffer([], this);
-  bufferDamage: DoubleBuffer<RegRectangle[]> = new DoubleBuffer([], this);
-  buffer: DoubleBuffer<WlBuffer | null | undefined> = new DoubleBuffer(undefined, this);
-  scale: DoubleBuffer<number> = new DoubleBuffer(1, this);
-  offset: DoubleBuffer<[number, number]> = new DoubleBuffer([0, 0], this);
+  opaqueRegions: RegRectangle[] = [];
+  inputRegions: RegRectangle[] = [];
+  surfaceDamage: RegRectangle[] = [];
+  bufferDamage: RegRectangle[] = [];
+  buffer: WlBuffer | null | undefined = undefined;
+  scale: number = 1;
+  offset: [number, number] = [0, 0];
 
   // TODO: Add getter/setter to check role stays the same (_role, _roleActive)
   role?: SurfaceRoles;
@@ -59,10 +60,12 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
     this.roleActive = false;
     this.emit("dropRole");
   }
-  doubleBufferedState: Set<DoubleBuffer<any>> = new Set([this.opaqueRegions, this.inputRegions, this.buffer, this.scale, this.surfaceDamage, this.bufferDamage, this.offset]);
 
+  cont: CUCont;
   constructor(initCtx: NewObjectDescriptor) {
     super(initCtx);
+
+    this.cont = new CUCont("desync");
   }
 
   outputs: Set<OutputInstances> = new Set();
@@ -71,7 +74,7 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
     const outputInstances = this.connection.display.outputRegistry.get(output)!.get(this.connection)!;
     this.outputs.add(outputInstances);
 
-    // ???
+    // TODO: fix ???
     const dataDevices = (this.connection.instances.get('wl_data_device') as WlDataDevice[] | undefined);
     dataDevices?.forEach(function (this: WlSurface, dataDevice: WlDataDevice) {
       dataDevice.surfaceFocusCallback();
@@ -93,14 +96,14 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
   }
 
   wlSetOpaqueRegion(args: { region: WlRegion }) {
-    this.opaqueRegions.pending = args.region?.instructions;
+    this.cont.appendAction(() => { this.opaqueRegions = args.region?.instructions });
   }
   wlSetInputRegion(args: { region: WlRegion }) {
-    this.inputRegions.pending = args.region?.instructions;
+    this.cont.appendAction(() => { this.inputRegions = args.region?.instructions });
   }
 
   wlOffset({ y, x }: { y: number, x: number }) {
-    this.offset.pending = [y, x];
+    this.cont.appendAction(() => { this.offset = [y, x] });
   }
 
   wlFrame({ callback: cbId }: { callback: NewObjectDescriptor }) {
@@ -114,11 +117,11 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
   }
 
   wlSetBufferScale(args: { scale: number }) {
-    this.scale.pending = args.scale;
+    this.cont.appendAction(() => { this.scale = args.scale; });
   }
 
   wlAttach(args: { buffer: WlBuffer | null }) {
-    this.buffer.pending = args.buffer;
+    this.cont.appendAction(() => { this.buffer = args.buffer; });
     if (args.buffer) args.buffer.surface = this;
   }
 
@@ -128,23 +131,24 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
   }
 
   update() {
-    for (const doubleBuffed of this.doubleBufferedState) {
-      doubleBuffed.cached = doubleBuffed.pending;
-    }
-    this.bufferDamage.pending = [];
-    this.surfaceDamage.pending = [];
+    // for (const doubleBuffed of this.doubleBufferedState) {
+    //   doubleBuffed.cached = doubleBuffed.pending;
+    // }
+    // this.bufferDamage.pending = [];
+    // this.surfaceDamage.pending = [];
 
-    this.buffer.pending = undefined;
-    if (!this.subsurface) this.applyCache();
-    if (this.subsurface && !this.subsurface.isSynced) this.applyCache();
-  }
-  applyCache() {
-    this.daughterSurfaces.forEach((surf) => surf.applyCache());
+    // this.buffer.pending = undefined;
+    // if (!this.subsurface) this.applyCache();
+    // if (this.subsurface && !this.subsurface.isSynced) this.applyCache();
 
-    for (const doubleBuffed of this.doubleBufferedState) {
-      // if (doubleBuffed.current instanceof WlBuffer && doubleBuffed.current !== doubleBuffed.cached) doubleBuffed.current.wlRelease();
-      doubleBuffed.current = doubleBuffed.cached;
-    }
+    this.cont.appendAction(() => {
+      if (this.pendingDamage.length > 0) this.surfaceDamage = this.pendingDamage;
+    });
+    this.cont.appendAction(() => {
+      if (this.pendingBufferDamage.length > 0) this.bufferDamage = this.pendingBufferDamage;
+    });
+
+    this.cont.commit([]);
   }
 
   wlCommit() {
@@ -152,29 +156,35 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
 
     this.emit('update');
 
-    if (this.buffer.current) {
-      this.buffer.current.addCommand('release', {});
+    if (this.buffer) {
+      this.buffer.addCommand('release', {});
 
       this.connection.sendPending();
     }
   }
 
+  pendingDamage: RegRectangle[] = [];
   wlDamage({ y, x, height, width }: { y: number, x: number, height: number, width: number }) {
-    this.surfaceDamage.pending.push(new RegRectangle(InstructionType.Add, y, x, height, width));
+    this.cont.appendAction(() => {
+      this.pendingDamage.push(new RegRectangle(InstructionType.Add, y, x, height, width));
+    });
   }
+  pendingBufferDamage: RegRectangle[] = [];
   wlDamageBuffer({ y, x, height, width }: { y: number, x: number, height: number, width: number }) {
-    this.bufferDamage.pending.push(new RegRectangle(InstructionType.Add, y, x, height, width));
+    this.cont.appendAction(() => {
+      this.pendingBufferDamage.push(new RegRectangle(InstructionType.Add, y, x, height, width));
+    });
   }
 
   getCurrlyDammagedBuffer() {
-    const surfaceDamageTransformed = this.surfaceDamage.current.map(function (this: WlSurface, v: RegRectangle) {
-      return v.copyWithDelta(this.offset.current[0], this.offset.current[1]);
+    const surfaceDamageTransformed = this.surfaceDamage.map(function (this: WlSurface, v: RegRectangle) {
+      return v.copyWithDelta(this.offset[0], this.offset[1]);
     }.bind(this));
 
     // Do some kind of algorithm, i guess... to avoid copying the same memory regions multiple times
     // Ill look at that later tho.
     // "Premature optimisation is the root of all evil"
 
-    return [...surfaceDamageTransformed, ...this.bufferDamage.current]
+    return [...surfaceDamageTransformed, ...this.bufferDamage]
   }
 }
