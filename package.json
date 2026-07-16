@@ -33,7 +33,7 @@
     "@cathodique/wl-serv-low": "file:../wl-serv-low"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
+    "@types/node": "^24.13.3",
     "typescript": "^5.9.2"
   }
 }
