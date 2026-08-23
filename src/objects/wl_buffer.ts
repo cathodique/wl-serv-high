@@ -36,7 +36,6 @@ export class WlBuffer extends BaseObject {
 
   wlDestroy() {
     this.parent.daughterBuffers.delete(this);
-    if (this.surface && this.surface.buffer.pending === this) this.surface.buffer.pending = null;
 
     super.wlDestroy();
   }

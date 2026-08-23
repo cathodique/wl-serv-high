@@ -101,5 +101,7 @@ export class WlKeyboard extends BaseObject<KeyboardEvents> {
 
   wlDestroy(): void {
     // this.recipient.destroy();
+
+    super.wlDestroy();
   }
 }

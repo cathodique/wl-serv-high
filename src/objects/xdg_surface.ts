@@ -1,5 +1,4 @@
 import { NewObjectDescriptor } from "@cathodique/wl-serv-low";
-import { DoubleBuffer } from "../lib/doublebuffer.js";
 import { BaseObject } from "./base_object.js";
 import { WlSurface } from "./wl_surface.js";
 import { XdgPopup } from "./xdg_popup.js";
@@ -41,19 +40,16 @@ export class XdgSurface extends BaseObject {
 
   // globalCoords =
 
-  geometry: DoubleBuffer<WindowGeometry> = new DoubleBuffer({ x: 0, y: 0, width: 0, height: 0 }, this);
+  geometry: WindowGeometry = { x: 0, y: 0, width: 0, height: 0 };
 
   constructor(initCtx: NewObjectDescriptor, surface: WlSurface) {
     super(initCtx);
 
     this.surface = surface;
-
-    this.surface.doubleBufferedState.add(this.geometry);
   }
 
   wlDestroy(): void {
     super.wlDestroy();
-    this.surface.doubleBufferedState.delete(this.geometry);
   }
 
   newSerial() {
@@ -69,7 +65,7 @@ export class XdgSurface extends BaseObject {
   }
 
   wlSetWindowGeometry(newGeom: { x: number, y: number, width: number, height: number }) {
-    this.geometry.pending = newGeom;
+    this.surface.cont.appendAction(() => this.geometry = newGeom);
   }
 
   wlGetToplevel(args: { id: NewObjectDescriptor }) {

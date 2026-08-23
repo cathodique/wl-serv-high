@@ -1,6 +1,7 @@
 import { interfaces, NewObjectDescriptor, ObjectReference } from "@cathodique/wl-serv-low";
 import type { WlRegistry } from "./wl_registry.js";
 import { HLConnection } from "../index.js";
+import $ from "informa"
 
 class ImplementationError extends Error {
 
@@ -10,7 +11,8 @@ export interface NewObjectDescriptorWithConx extends Omit<NewObjectDescriptor, "
   connection: HLConnection;
 }
 
-export class BaseObject<T extends Record<string, any[]> | [never] = Record<string, any[]> | [never]> extends ObjectReference<T> {
+const StatifiedObjectReference = $.makeStatified(ObjectReference);
+export class BaseObject<T extends Record<string, any[]> | [never] = Record<string, any[]> | [never]> extends StatifiedObjectReference<T> {
   process() {}
 
   connection: HLConnection;
