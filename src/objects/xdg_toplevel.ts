@@ -2,7 +2,7 @@ import { interfaces, NewObjectDescriptor } from "@cathodique/wl-serv-low";
 import { BaseObject } from "./base_object.js";
 import { XdgSurface } from "./xdg_surface.js";
 import { ZxdgToplevelDecorationV1 } from "./zxdg_decoration_manager_v1.js";
-import { StatifiedSet } from "informa/dist/quirks/set.js";
+import { EventEmitter } from "node:stream";
 
 const anyValue = <T>(s: Set<T> | Map<any, T>): T | undefined => s.values().next().value;
 
@@ -10,6 +10,27 @@ type PossibleStates = "maximized" | "fullscreen" | "resizing" | "activated"
   | "tiled_left" | "tiled_right" | "tiled_top" | "tiled_bottom"
   | "suspended"
   | "constrained_left" | "constrained_right" | "constrained_top" | "constrained_bottom";
+
+class EventfulSet<T> extends Set<T> {
+  event: EventEmitter = new EventEmitter();
+
+  add(v: T): this {
+    super.add(v);
+    this.event.emit('change');
+    return this;
+  }
+  delete(v: T): boolean {
+    const result = super.delete(v);
+    this.event.emit('change');
+    return result;
+  }
+  clear(): void {
+    if (this.size != 0) {
+      super.clear();
+      this.event.emit('change');
+    }
+  }
+}
 
 export class XdgToplevel extends BaseObject {
   appId?: string;
@@ -24,7 +45,7 @@ export class XdgToplevel extends BaseObject {
 
   decoration?: ZxdgToplevelDecorationV1;
 
-  readonly states = new StatifiedSet<PossibleStates>();
+  readonly states: EventfulSet<PossibleStates> = new EventfulSet();
 
   constructor(initCtx: NewObjectDescriptor) {
     super(initCtx);
@@ -39,10 +60,10 @@ export class XdgToplevel extends BaseObject {
     this.configureSequence(true, true);
     this.parent.surface.on("wlCommit", function (this: XdgToplevel) {
       if (!(
-        this.parent.geometry.height === this.lastDimensions[0]
-        && this.parent.geometry.width === this.lastDimensions[1]
+        this.parent.geometry.current.height === this.lastDimensions[0]
+        && this.parent.geometry.current.width === this.lastDimensions[1]
       )) {
-        this.lastDimensions = [this.parent.geometry.height, this.parent.geometry.width];
+        this.lastDimensions = [this.parent.geometry.current.height, this.parent.geometry.current.width];
         this.configureSequence(true, false);
       }
     }.bind(this));

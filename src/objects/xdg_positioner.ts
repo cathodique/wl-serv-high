@@ -131,8 +131,7 @@ type CompleteXdgPositioner = XdgPositioner & { size: [number, number], anchorPos
 export class XdgPositioner extends BaseObject {
   size?: [number, number]; // YX
   wlSetSize({ height, width }: { height: number, width: number }) {
-    if (height <= 0) this.raiseError("invalid_input", "Height must be strictly positive");
-    if (width <= 0) this.raiseError("invalid_input", "Width must be strictly positive");
+    if (height <= 0) return
 
     this.size = [height, width];
   }
@@ -176,7 +175,6 @@ export class XdgPositioner extends BaseObject {
   private static isComplete(that: XdgPositioner): that is CompleteXdgPositioner {
     if (!(that.size?.every((v) => v > 0))) return false;
     if (!(that.anchorSize?.every((v) => v >= 0))) return false;
-    if (!that.anchorPos) return false;
 
     return true;
   }
@@ -248,14 +246,13 @@ export class XdgPositioner extends BaseObject {
       case "none":
       case "bottom":
         // +--o--+
-        from[1] -= this.size[1] / 2;
-        to[1] += this.size[1] / 2;
+        from[1] -= this.size[0] / 2;
+        to[1] += this.size[0] / 2;
         break;
       case "top_right":
-      case "right":
       case "bottom_right":
         // o-----+
-        to[1] += this.size[1];
+        to[1] += this.size[0] / 2;
         break;
     }
     switch (theoryGravity || this.gravity) {
@@ -273,7 +270,7 @@ export class XdgPositioner extends BaseObject {
       case "bottom_left":
       case "bottom":
       case "bottom_right":
-        to[0] += this.size[0];
+        to[0] -= this.size[0];
         break;
     }
 
@@ -323,7 +320,7 @@ export class XdgPositioner extends BaseObject {
 
         const newTo = result.to[0] + delta;
 
-        if (newTo <= contY + contH) {
+        if (newTo <= contY + contW) {
           isTopConstrained = false;
           result.from[0] = result.from[0] + delta;
           result.to[0] = newTo;
@@ -344,14 +341,14 @@ export class XdgPositioner extends BaseObject {
 
     if (this.constraintAdjustment.has('slide_x') && (isLeftConstrained !== isRightConstrained )) {
       if (isTopConstrained) {
-        const delta = contX - result.from[1];
+        const delta = contX - result.from[0];
 
-        const newTo = result.to[1] + delta;
+        const newTo = result.to[0] + delta;
 
         if (newTo <= contX + contW) {
           isLeftConstrained = false;
-          result.from[1] = result.from[1] + delta;
-          result.to[1] = newTo;
+          result.from[0] = result.from[0] + delta;
+          result.to[0] = newTo;
         }
       } else {
         const delta = result.to[1] - (contX + contW);

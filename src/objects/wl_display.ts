@@ -58,7 +58,5 @@ export class WlDisplay extends BaseObject {
   wlDestroy(): void {
     this.outputRegistry.off('add', this.outputRegistryOnAdd);
     this.seatRegistry.off('add', this.seatRegistryOnAdd);
-
-    super.wlDestroy();
   }
 }

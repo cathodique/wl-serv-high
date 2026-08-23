@@ -131,14 +131,12 @@ export class WlRegistry extends BaseObject {
     this.outputRegistry.off('del', this.outputRegistryOnDelete);
     this.seatRegistry.off('add', this.seatRegistryOnAdd);
     this.seatRegistry.off('del', this.seatRegistryOnDelete);
-
-    super.wlDestroy();
   }
 
   wlBind(args: { id: NewObjectDescriptor, name: number }) {
     const ifaceName = args.id.type;
     const isInNewIdMap = (val: string): val is keyof typeof newIdMap => val in newIdMap;
-    if (!isInNewIdMap(ifaceName)) return this.raiseError('invalid_method', "No such interface in registry");
+    if (!isInNewIdMap(ifaceName)) return this.connection.display.raiseError('invalid_method', "No such interface in registry");
 
     this.connection.createObject(new newIdMap[ifaceName](args.id, args.name));
   }
