@@ -30,7 +30,8 @@
   "dependencies": {
     "@cathodique/mmap-io": "file:../mmap-io",
     "@cathodique/usocket": "file:../usocket",
-    "@cathodique/wl-serv-low": "file:../wl-serv-low"
+    "@cathodique/wl-serv-low": "file:../wl-serv-low",
+    "informa": "^1.0.2"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
