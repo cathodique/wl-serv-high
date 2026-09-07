@@ -152,10 +152,12 @@ export class XdgPositioner extends BaseObject {
   }
 
   gravity?: typeof dirsAndCornsAndNone[number];
-  wlSetGravity({ anchor }: { anchor: number }) {
-    const fullGravity = interfaces['xdg_positioner'].enums.gravity.itoa[anchor];
-
-    this.gravity = fullGravity as typeof dirsAndCornsAndNone[number]; // I dont think theyre gonna change it lol
+  wlSetGravity(args: { gravity?: number; anchor?: number }) {
+    const val = args.gravity !== undefined ? args.gravity : args.anchor;
+    if (val !== undefined) {
+      const fullGravity = interfaces['xdg_positioner'].enums.gravity.itoa[val];
+      this.gravity = fullGravity as typeof dirsAndCornsAndNone[number];
+    }
   }
 
   reactive = false;
@@ -174,19 +176,17 @@ export class XdgPositioner extends BaseObject {
   }
 
   private static isComplete(that: XdgPositioner): that is CompleteXdgPositioner {
-    if (!(that.size?.every((v) => v > 0))) return false;
-    if (!(that.anchorSize?.every((v) => v >= 0))) return false;
-    if (!that.anchorPos) return false;
-
+    if (!that.size || that.size[0] <= 0 || that.size[1] <= 0) return false;
     return true;
   }
 
   anchorPoint(theoryAnchor?: typeof dirsAndCornsAndNone[number]): [number, number] {
-    if (!XdgPositioner.isComplete(this)) throw new Error("Indeterminate.");
+    const anchorPos = this.anchorPos ?? [0, 0];
+    const anchorSize = this.anchorSize ?? [0, 0];
+    let anchor: [number, number] = [this.offset[0] + anchorPos[0], this.offset[1] + anchorPos[1]];
 
-    let anchor: [number, number] = [this.offset[0] + this.anchorPos[0], this.offset[1] + this.anchorPos[1]];
-
-    switch (theoryAnchor || this.anchor) {
+    const resolvedAnchor = theoryAnchor || this.anchor || "none";
+    switch (resolvedAnchor) {
       case "top_left":
       case "left":
       case "bottom_left":
@@ -197,16 +197,16 @@ export class XdgPositioner extends BaseObject {
       case "none":
       case "bottom":
         // X is half-W
-        anchor[1] += this.anchorSize[1] / 2;
+        anchor[1] += anchorSize[1] / 2;
         break;
       case "top_right":
       case "right":
       case "bottom_right":
         // X is full-W
-        anchor[1] += this.anchorSize[1];
+        anchor[1] += anchorSize[1];
         break;
     }
-    switch (this.anchor) {
+    switch (resolvedAnchor) {
       case "top_left":
       case "top":
       case "top_right":
@@ -217,13 +217,13 @@ export class XdgPositioner extends BaseObject {
       case "none":
       case "right":
         // Y is half-H
-        anchor[0] += this.anchorSize[0] / 2;
+        anchor[0] += anchorSize[0] / 2;
         break;
       case "bottom_left":
       case "bottom":
       case "bottom_right":
         // Y is full-H
-        anchor[0] += this.anchorSize[0];
+        anchor[0] += anchorSize[0];
         break;
     }
 
@@ -231,49 +231,49 @@ export class XdgPositioner extends BaseObject {
   }
 
   unboundedPosition(theoryAnchor?: typeof dirsAndCornsAndNone[number], theoryGravity?: typeof dirsAndCornsAndNone[number]) {
-    if (!XdgPositioner.isComplete(this)) throw new Error("Indeterminate.");
-
+    const size = this.size ?? [200, 200];
     const anchor = this.anchorPoint(theoryAnchor);
     const from: [number, number] = [...anchor];
     const to: [number, number] = [...anchor];
 
-    switch (theoryGravity || this.gravity) {
+    const resolvedGravity = theoryGravity || this.gravity || "none";
+    switch (resolvedGravity) {
       case "top_left":
       case "left":
       case "bottom_left":
         // +-----o
-        from[1] -= this.size[1];
+        from[1] -= size[1];
         break;
       case "top":
       case "none":
       case "bottom":
         // +--o--+
-        from[1] -= this.size[1] / 2;
-        to[1] += this.size[1] / 2;
+        from[1] -= size[1] / 2;
+        to[1] += size[1] / 2;
         break;
       case "top_right":
       case "right":
       case "bottom_right":
         // o-----+
-        to[1] += this.size[1];
+        to[1] += size[1];
         break;
     }
-    switch (theoryGravity || this.gravity) {
+    switch (resolvedGravity) {
       case "top_left":
       case "top":
       case "top_right":
-        from[0] -= this.size[0];
+        from[0] -= size[0];
         break;
       case "left":
       case "none":
       case "right":
-        from[0] -= this.size[0] / 2;
-        to[0] += this.size[0] / 2;
+        from[0] -= size[0] / 2;
+        to[0] += size[0] / 2;
         break;
       case "bottom_left":
       case "bottom":
       case "bottom_right":
-        to[0] += this.size[0];
+        to[0] += size[0];
         break;
     }
 

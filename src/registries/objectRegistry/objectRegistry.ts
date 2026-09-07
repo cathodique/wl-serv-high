@@ -1,29 +1,21 @@
-import EventEmitter from "events";
+import $ from "informa";
 import { HLConnection } from "../../index.js";
 import { BaseObject } from "../../objects/base_object.js";
 
 // An object registry encapsulates every Authority and their Config
-export class ObjectRegistry<This, Authority, Config> extends EventEmitter<{ 'add': [Config]; 'del': [Config, Authority] }> {
-  authorityMap: Map<Config, Authority>;
+export class ObjectRegistry<This, Authority, Config> extends $.StatifiedMap<Config, Authority> {
   constructor(authorityMap: Map<Config, Authority> = new Map()) {
-    super();
-    this.authorityMap = authorityMap;
+    super(authorityMap);
   }
 
   authorityCtor: new (registry: This, config: Config) => Authority = null as unknown as new (registry: This, config: Config) => Authority;
   addAuthority(config: Config) {
-    this.authorityMap.set(config, new this.authorityCtor(this as unknown as This, config));
-    this.emit("add", config);
+    this.set(config, new this.authorityCtor(this as unknown as This, config));
   }
   removeAuthority(config: Config) {
-    const authority = this.authorityMap.get(config);
+    const authority = this.get(config);
     if (!authority) return;
-    this.emit("del", config, authority);
-    this.authorityMap.delete(config);
-  }
-
-  get(config: Config) {
-    return this.authorityMap.get(config);
+    this.delete(config);
   }
 }
 

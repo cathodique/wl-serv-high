@@ -6,26 +6,22 @@ import { StrutConfig } from "../registries/conceptRegistry/strut.js";
 import { OutputConfiguration } from "../registries/_exports.js";
 
 interface XdgPopupArgs {
-  parent: XdgSurface; // We will see when we will implement a protocol that might require it to be null
+  parent: XdgSurface;
   positioner: XdgPositioner;
 }
 
-function strutToFromTo (strut: StrutConfig) {
-  const result = new FromTo({
+function strutToFromTo(strut: StrutConfig): FromTo {
+  return new FromTo({
     from: [strut.y, strut.x],
     to: [strut.y + strut.height, strut.x + strut.width],
   });
-
-  return result;
 }
 
-function outputToFromTo (output: OutputConfiguration) {
-  const result = new FromTo({
+function outputToFromTo(output: OutputConfiguration): FromTo {
+  return new FromTo({
     from: [output.y, output.x],
-    to: [output.y + output.h, output.x + output.w],
+    to: [output.y + (output.h || output.effectiveH || 1080), output.x + (output.w || output.effectiveW || 1920)],
   });
-
-  return result;
 }
 
 export class XdgPopup extends BaseObject {
@@ -33,46 +29,117 @@ export class XdgPopup extends BaseObject {
 
   meta: XdgPopupArgs;
   parent: XdgSurface;
+  parentXdgSurface: XdgSurface;
+
+  isGrabbed: boolean = false;
+  grabSeat?: any;
+  grabSerial?: number;
+
+  geometry = { x: 0, y: 0, width: 0, height: 0 };
 
   constructor(initCtx: NewObjectDescriptor, args: XdgPopupArgs) {
     super(initCtx);
 
     this.meta = args;
 
-    if (!(initCtx.parent instanceof XdgSurface)) throw new Error('Parent must be xdg_surface');
+    if (!(initCtx.parent instanceof XdgSurface)) throw new Error("Parent must be xdg_surface");
     this.parent = initCtx.parent;
     this.parent.popup = this;
     this.parent.role = "popup";
     this.parent.surface.setRole("popup");
+
+    this.parentXdgSurface = args.parent;
+    if (this.parentXdgSurface) {
+      this.parentXdgSurface.daughterPopups.add(this);
+      this.parentXdgSurface.emit("new_popup", this);
+    }
+
+    this.configureSequence();
+
+    this.parent.surface.on("wlCommit", () => {
+      this.emit("update");
+    });
   }
-  get renderReady() {
+
+  get renderReady(): boolean {
     return true;
   }
 
-  // render() {
-  //   const fromTo = this.#computeFromTo();
+  computeFromTo(): FromTo {
+    const positioner = this.meta.positioner;
+    if (!positioner || !positioner.complete) {
+      const size = positioner?.size ?? [200, 200];
+      return new FromTo({ from: [0, 0], to: [size[0], size[1]] });
+    }
 
-  //   this.addCommand('configure', fromTo.yxhw);
-  //   this.parent.addCommand('configure', { serial: this.parent.newSerial() });
-  // }
+    const original = positioner.unboundedPosition();
+    const closest: [number, FromTo][] = [];
 
-  // #computeFromTo() {
-  //   const positioner = this.meta.positioner;
+    const outputs = this.parentXdgSurface?.surface?.outputs?.size
+      ? [...this.parentXdgSurface.surface.outputs]
+      : (this.connection.display?.outputRegistry ? [...this.connection.display.outputRegistry.values()] : []);
 
-  //   const original = positioner.unboundedPosition();
-  //   const closest: [number, FromTo][] = [];
-  //   // TODO: Fetch bounding box from parent
-  //   for (const output of this.meta.parent.surface.outputs) {
-  //     const positionerFromTo = positioner.positionWithinOutputAndStruts(
-  //       outputToFromTo(output.config),
-  //       [...this.connection.display.strutRegistry.configSet].map(strutToFromTo),
-  //     )!;
+    const struts = this.connection.display?.strutRegistry
+      ? [...this.connection.display.strutRegistry].map(strutToFromTo)
+      : [];
 
-  //     closest.push([original.centerDistance(positionerFromTo), positionerFromTo]);
-  //   }
+    for (const output of outputs) {
+      const config = (output as any).config ?? output;
+      if (!config) continue;
+      const positionerFromTo = positioner.positionWithinOutputAndStruts(
+        outputToFromTo(config),
+        struts
+      );
+      if (positionerFromTo) {
+        closest.push([original.centerDistance(positionerFromTo), positionerFromTo]);
+      }
+    }
 
-  //   closest.sort(([a, ], [b, ]) => a - b);
+    if (closest.length > 0) {
+      closest.sort(([a], [b]) => a - b);
+      return closest[0][1];
+    }
 
-  //   return closest[0][1];
-  // }
+    return original;
+  }
+
+  configureSequence(): void {
+    const fromTo = this.computeFromTo();
+    const { x, y, width, height } = fromTo.yxhw;
+    this.geometry = { x, y, width, height };
+
+    this.addCommand("configure", { x, y, width, height });
+    this.parent.addCommand("configure", { serial: this.parent.newSerial() });
+  }
+
+  wlGrab(args: { seat: any; serial: number }): void {
+    this.isGrabbed = true;
+    this.grabSeat = args.seat;
+    this.grabSerial = args.serial;
+    this.emit("grab", args);
+  }
+
+  wlReposition(args: { positioner: XdgPositioner; token: number }): void {
+    this.meta.positioner = args.positioner;
+    const fromTo = this.computeFromTo();
+    const { x, y, width, height } = fromTo.yxhw;
+    this.geometry = { x, y, width, height };
+
+    this.addCommand("repositioned", { token: args.token });
+    this.addCommand("configure", { x, y, width, height });
+    this.parent.addCommand("configure", { serial: this.parent.newSerial() });
+  }
+
+  popupDone(): void {
+    this.addCommand("popupDone", {});
+    this.emit("popup_done");
+  }
+
+  wlDestroy(): void {
+    if (this.parentXdgSurface) {
+      this.parentXdgSurface.daughterPopups.delete(this);
+    }
+    this.emit("destroy");
+    super.wlDestroy();
+  }
 }

@@ -30,6 +30,7 @@ export class SeatInstances extends ObjectInstances<SeatInstances, WlSeat, SeatAu
     this.connection.sendPending();
   }
   focus(surf: WlSurface, keysDown: number[]) {
+    if (!surf || !this.connection.objects.has(surf.oid)) return 0;
     const focusSerial = this.connection.serial.next();
 
     this.forAll(function (this: SeatInstances, wlSeat: WlSeat) {
@@ -44,6 +45,7 @@ export class SeatInstances extends ObjectInstances<SeatInstances, WlSeat, SeatAu
     return focusSerial;
   }
   blur(surf: WlSurface) {
+    if (!surf || !this.connection.objects.has(surf.oid)) return;
     this.forAll(function (this: SeatInstances, wlSeat: WlSeat) {
       wlSeat.addCommandToKeyboards('leave', {
         serial: this.connection.time.getTime(),
@@ -65,18 +67,20 @@ export class SeatInstances extends ObjectInstances<SeatInstances, WlSeat, SeatAu
     this.connection.sendPending();
   }
   keyUp(keyUp: number) {
+    const keyStateEnum = interfaces.wl_keyboard.enums.keyState.atoi;
     this.forAll(function (this: SeatInstances, wlSeat: WlSeat) {
       wlSeat.addCommandToKeyboards('key', {
         serial: this.connection.serial.next(),
         time: this.connection.time.getTime(),
         key: keyUp - 8,
-        state: interfaces.wl_keyboard.enums.keymapFormat.atoi.released,
+        state: keyStateEnum.released,
       });
     }.bind(this));
     this.connection.sendPending();
   }
 
   enter(surf: WlSurface, surfX: number, surfY: number) {
+    if (!surf || !this.connection.objects.has(surf.oid)) return 0;
     const enterSerial = this.connection.serial.next();
 
     this.forAll(function (this: SeatInstances, wlSeat: WlSeat) {
@@ -110,6 +114,7 @@ export class SeatInstances extends ObjectInstances<SeatInstances, WlSeat, SeatAu
     this.connection.sendPending();
   }
   leave(surf: WlSurface) {
+    if (!surf || !this.connection.objects.has(surf.oid)) return;
     this.forAll(function (this: SeatInstances, wlSeat: WlSeat) {
       wlSeat.addCommandToPointers('leave', {
         serial: this.connection.serial.next(),

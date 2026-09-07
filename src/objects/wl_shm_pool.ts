@@ -23,6 +23,17 @@ export class WlShmPool extends BaseObject {
     this.meta = args;
   }
 
+  wlDestroy() {
+    super.wlDestroy();
+    this.cleanupIfEligible();
+  }
+
+  cleanupIfEligible() {
+    if (this.daughterBuffers.size === 0 && this.bufferId !== undefined) {
+      mmap.unmap(this.bufferId, true);
+    }
+  }
+
   wlResize(args: Record<string, any>) {
     mmap.unmap(this.bufferId);
     this.meta.size = args.size;

@@ -1,6 +1,6 @@
 import { Compositor, Connection, ConnectionParams } from "@cathodique/wl-serv-low";
 import { WlRegistryMetadata } from "./objects/wl_registry.js";
-import { USocket } from "@cathodique/usocket";
+import { USocket } from "@cathodique/usocket2";
 import { Time } from "./lib/time.js";
 import { BaseObject } from "./objects/base_object.js";
 import { TickAuthority } from "./lib/tickAuthority.js";
@@ -76,11 +76,16 @@ export class HLConnection extends Connection<BaseObject> {
     this.createObject(this.display);
 
     // Handle client disconnect
-    sock.on("end", function (this: HLConnection) {
+    let cleanedUp = false;
+    const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
       const deleteMe = [...this.objects.values()];
       for (let i = deleteMe.length - 1; i >= 1; i -= 1) {
-        deleteMe[i].wlDestroy();
+        deleteMe[i]?.wlDestroy?.();
       }
-    }.bind(this));
+    };
+    sock.once("end", cleanup);
+    sock.once("close", cleanup);
   }
 }

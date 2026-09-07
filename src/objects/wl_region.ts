@@ -11,15 +11,15 @@ export class RegRectangle {
   w: number;
   h: number;
 
-  constructor(type: InstructionType, y: number, x: number, h: number, w: number) {
+  constructor(type: InstructionType, x: number, y: number, w: number, h: number) {
     this.type = type;
-    this.y = y;
     this.x = x;
-    this.h = h;
+    this.y = y;
     this.w = w;
+    this.h = h;
   }
 
-  hasCoordinate(y: number, x: number) {
+  hasCoordinate(x: number, y: number) {
     return this.x <= x && this.y <= y
       && this.w + this.x > x && this.h + this.y > y;
   }
@@ -32,11 +32,11 @@ export class RegRectangle {
 export class WlRegion extends BaseObject {
   instructions: RegRectangle[] = [];
 
-  wlAdd(args: Record<string, any>) {
-    this.instructions.push(new RegRectangle(InstructionType.Add, args.y, args.x, args.height, args.width));
+  wlAdd(args: { y: number; x: number; height: number; width: number }) {
+    this.instructions.push(new RegRectangle(InstructionType.Add, args.x, args.y, args.width, args.height));
   }
 
-  wlSubtract(args: Record<string, any>) {
-    this.instructions.push(new RegRectangle(InstructionType.Subtract, args.y, args.x, args.height, args.width));
+  wlSubtract(args: { y: number; x: number; height: number; width: number }) {
+    this.instructions.push(new RegRectangle(InstructionType.Subtract, args.x, args.y, args.width, args.height));
   }
 }

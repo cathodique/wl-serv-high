@@ -29,9 +29,9 @@
   "homepage": "https://github.com/cathodique/wl-serv-high#readme",
   "dependencies": {
     "@cathodique/mmap-io": "file:../mmap-io",
-    "@cathodique/usocket": "file:../usocket",
+    "@cathodique/usocket2": "file:../usocket2",
     "@cathodique/wl-serv-low": "file:../wl-serv-low",
-    "informa": "^1.0.2"
+    "informa": "^5.0.11"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

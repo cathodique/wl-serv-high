@@ -37,6 +37,7 @@ type SurfaceRoles = "cursor" | "toplevel" | "popup" | "subsurface";
 export class WlSurface extends BaseObject<SurfaceEvents> {
   xdgSurface: XdgSurface | null = null;
   daughterSurfaces: Set<WlSurface> = new Set();
+  subsurfaceOrder: WlSurface[] = [];
   subsurface: WlSubsurface | null = null;
 
   opaqueRegions: RegRectangle[] = [];
@@ -44,6 +45,7 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
   surfaceDamage: RegRectangle[] = [];
   bufferDamage: RegRectangle[] = [];
   buffer: WlBuffer | null | undefined = undefined;
+  previousBuffer: WlBuffer | null | undefined = undefined;
   scale: number = 1;
   offset: [number, number] = [0, 0];
 
@@ -95,15 +97,12 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
     }.bind(this));
   }
 
-  wlSetOpaqueRegion(args: { region: WlRegion }) {
-    this.cont.appendAction(() => { this.opaqueRegions = args.region?.instructions });
-  }
-  wlSetInputRegion(args: { region: WlRegion }) {
-    this.cont.appendAction(() => { this.inputRegions = args.region?.instructions });
+  wlSetOpaqueRegion(args: { region: WlRegion | null }) {
+    this.cont.appendAction(() => { this.opaqueRegions = args.region ? args.region.instructions : []; });
   }
 
-  wlOffset({ y, x }: { y: number, x: number }) {
-    this.cont.appendAction(() => { this.offset = [y, x] });
+  wlSetInputRegion(args: { region: WlRegion | null }) {
+    this.cont.appendAction(() => { this.inputRegions = args.region ? args.region.instructions : []; });
   }
 
   wlFrame({ callback: cbId }: { callback: NewObjectDescriptor }) {
@@ -121,8 +120,19 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
   }
 
   wlAttach(args: { buffer: WlBuffer | null }) {
-    this.cont.appendAction(() => { this.buffer = args.buffer; });
-    if (args.buffer) args.buffer.surface = this;
+    this.cont.appendAction(() => {
+      const oldBuffer = this.buffer;
+      this.buffer = args.buffer;
+      if (oldBuffer && oldBuffer !== this.buffer) {
+        this.previousBuffer = oldBuffer;
+        const conn = this.connection;
+        oldBuffer.pendingRelease = () => {
+          oldBuffer.addCommand('release', {});
+          conn.sendPending();
+        };
+      }
+      if (args.buffer) args.buffer.surface = this;
+    });
   }
 
   get synced(): boolean {
@@ -131,16 +141,6 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
   }
 
   update() {
-    // for (const doubleBuffed of this.doubleBufferedState) {
-    //   doubleBuffed.cached = doubleBuffed.pending;
-    // }
-    // this.bufferDamage.pending = [];
-    // this.surfaceDamage.pending = [];
-
-    // this.buffer.pending = undefined;
-    // if (!this.subsurface) this.applyCache();
-    // if (this.subsurface && !this.subsurface.isSynced) this.applyCache();
-
     this.cont.appendAction(() => {
       if (this.pendingDamage.length > 0) this.surfaceDamage = this.pendingDamage;
     });
@@ -153,13 +153,12 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
 
   wlCommit() {
     this.update();
-
+    const prev = this.previousBuffer;
     this.emit('update');
-
-    if (this.buffer) {
-      this.buffer.addCommand('release', {});
-
-      this.connection.sendPending();
+    // If previousBuffer was not consumed/released by custom rendering listener, release it now
+    if (this.previousBuffer && this.previousBuffer === prev) {
+      this.previousBuffer.release?.();
+      this.previousBuffer = undefined;
     }
   }
 
@@ -181,10 +180,14 @@ export class WlSurface extends BaseObject<SurfaceEvents> {
       return v.copyWithDelta(this.offset[0], this.offset[1]);
     }.bind(this));
 
-    // Do some kind of algorithm, i guess... to avoid copying the same memory regions multiple times
-    // Ill look at that later tho.
-    // "Premature optimisation is the root of all evil"
-
     return [...surfaceDamageTransformed, ...this.bufferDamage]
+  }
+
+  wlDestroy() {
+    this.buffer?.release?.();
+    this.buffer = null;
+    this.previousBuffer?.release?.();
+    this.previousBuffer = null;
+    super.wlDestroy();
   }
 }

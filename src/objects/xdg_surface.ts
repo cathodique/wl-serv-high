@@ -17,6 +17,8 @@ export class XdgSurface extends BaseObject {
   toplevel?: XdgToplevel;
   popup?: XdgPopup;
 
+  daughterPopups: Set<XdgPopup> = new Set();
+
   _role?: "toplevel" | "popup";
   _roleActive: boolean = false;
   get role() {
@@ -35,10 +37,7 @@ export class XdgSurface extends BaseObject {
   }
 
   lastConfigureSerial = 0;
-  // wasLastConfigureAcked = true;
-  pendingSerials = new Set();
-
-  // globalCoords =
+  pendingSerials = new Set<number>();
 
   geometry: WindowGeometry = { x: 0, y: 0, width: 0, height: 0 };
 
@@ -46,9 +45,14 @@ export class XdgSurface extends BaseObject {
     super(initCtx);
 
     this.surface = surface;
+    this.surface.xdgSurface = this;
   }
 
   wlDestroy(): void {
+    for (const p of this.daughterPopups) {
+      p.wlDestroy();
+    }
+    this.daughterPopups.clear();
     super.wlDestroy();
   }
 

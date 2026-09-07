@@ -8,9 +8,11 @@ import { WlShm } from "./wl_shm.js";
 import { WlDataDeviceManager } from "./wl_data_device_manager.js";
 import { XdgWmBase } from "./xdg_wm_base.js";
 import { ZxdgDecorationManagerV1 } from "./zxdg_decoration_manager_v1.js";
+import { ZwpLinuxDmabufV1 } from "./zwp_linux_dmabuf_v1.js";
 import { OutputConfiguration, OutputRegistry } from "../registries/objectRegistry/output.js";
 import { SeatConfiguration, SeatRegistry } from "../registries/objectRegistry/seat.js";
 import { StrutRegistry } from "../registries/conceptRegistry/strut.js";
+import $ from "informa";
 
 export interface WlRegistryMetadata {
   outputs: OutputRegistry;
@@ -27,6 +29,7 @@ const newIdMap = {
   wl_output: WlOutput,
   xdg_wm_base: XdgWmBase,
   zxdg_decoration_manager_v1: ZxdgDecorationManagerV1,
+  zwp_linux_dmabuf_v1: ZwpLinuxDmabufV1,
 };
 
 // TODO: REFACTOR (WTF!!)
@@ -42,6 +45,7 @@ export class WlRegistry extends BaseObject {
     'wl_data_device_manager',
     'xdg_wm_base',
     'zxdg_decoration_manager_v1',
+    'zwp_linux_dmabuf_v1',
   ]
 
   static supportedByRegistry = [
@@ -101,22 +105,22 @@ export class WlRegistry extends BaseObject {
     super(initCtx);
 
     this.outputRegistry = this.connection.display.outputRegistry;
-    for (const outputAuth of this.outputRegistry.authorityMap.keys()) {
+    for (const outputAuth of this.outputRegistry.keys()) {
       const nextIdx = this.getRegistryName();
       this.contents[nextIdx] = 'wl_output';
       this.outputConfigByName.set(nextIdx, outputAuth);
     }
-    this.outputRegistry.on('add', this.outputRegistryOnAdd);
-    this.outputRegistry.on('del', this.outputRegistryOnDelete);
+    $.onAddEntry(() => this.outputRegistry, this.outputRegistryOnAdd);
+    $.onDeleteEntry(() => this.outputRegistry, this.outputRegistryOnDelete);
 
     this.seatRegistry = this.connection.display.seatRegistry;
-    for (const seatAuth of this.seatRegistry.authorityMap.keys()) {
+    for (const seatAuth of this.seatRegistry.keys()) {
       const nextIdx = this.getRegistryName();
       this.contents[nextIdx] = 'wl_seat';
       this.seatConfigByName.set(nextIdx, seatAuth);
     }
-    this.seatRegistry.on('add', this.seatRegistryOnAdd);
-    this.seatRegistry.on('del', this.seatRegistryOnDelete);
+    $.onAddEntry(() => this.seatRegistry, this.seatRegistryOnAdd);
+    $.onDeleteEntry(() => this.seatRegistry, this.seatRegistryOnDelete);
 
     for (const numericName in this.contents) {
       const name = this.contents[numericName];
@@ -127,10 +131,10 @@ export class WlRegistry extends BaseObject {
   }
 
   wlDestroy(): void {
-    this.outputRegistry.off('add', this.outputRegistryOnAdd);
-    this.outputRegistry.off('del', this.outputRegistryOnDelete);
-    this.seatRegistry.off('add', this.seatRegistryOnAdd);
-    this.seatRegistry.off('del', this.seatRegistryOnDelete);
+    $.offAddEntry(() => this.outputRegistry, this.outputRegistryOnAdd);
+    $.offDeleteEntry(() => this.outputRegistry, this.outputRegistryOnDelete);
+    $.offAddEntry(() => this.seatRegistry, this.seatRegistryOnAdd);
+    $.offDeleteEntry(() => this.seatRegistry, this.seatRegistryOnDelete);
 
     super.wlDestroy();
   }

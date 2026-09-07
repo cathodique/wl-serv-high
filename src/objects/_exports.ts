@@ -24,3 +24,4 @@ export * from "./xdg_surface.js";
 export * from "./xdg_toplevel.js";
 export * from "./xdg_wm_base.js";
 export * from "./zxdg_decoration_manager_v1.js";
+export * from "./zwp_linux_dmabuf_v1.js";

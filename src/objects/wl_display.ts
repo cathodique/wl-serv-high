@@ -5,6 +5,7 @@ import { WlRegistry } from "./wl_registry.js";
 import { OutputConfiguration, OutputRegistry } from "../registries/objectRegistry/output.js";
 import { SeatConfiguration, SeatRegistry } from "../registries/objectRegistry/seat.js";
 import { StrutRegistry } from "../registries/conceptRegistry/strut.js";
+import $ from "informa";
 
 export class WlDisplay extends BaseObject {
   _version: number = 1;
@@ -30,14 +31,14 @@ export class WlDisplay extends BaseObject {
     //   this.outputAuthorities.set(output, outputAuth);
     // }
     this.outputRegistry = regMeta.outputs;
-    this.outputRegistry.on('add', this.outputRegistryOnAdd);
-    for (const authority of this.outputRegistry.authorityMap.values()) {
+    $.onAddEntry(() => this.outputRegistry, this.outputRegistryOnAdd);
+    for (const authority of this.outputRegistry.values()) {
       authority.createInstances(this.connection);
     }
 
     this.seatRegistry = regMeta.seats;
-    this.seatRegistry.on('add', this.seatRegistryOnAdd);
-    for (const authority of this.seatRegistry.authorityMap.values()) {
+    $.onAddEntry(() => this.seatRegistry, this.seatRegistryOnAdd);
+    for (const authority of this.seatRegistry.values()) {
       authority.createInstances(this.connection);
     }
 
@@ -56,8 +57,8 @@ export class WlDisplay extends BaseObject {
   }
 
   wlDestroy(): void {
-    this.outputRegistry.off('add', this.outputRegistryOnAdd);
-    this.seatRegistry.off('add', this.seatRegistryOnAdd);
+    $.offSetEntry(() => this.outputRegistry, this.outputRegistryOnAdd);
+    $.offSetEntry(() => this.seatRegistry, this.seatRegistryOnAdd);
 
     super.wlDestroy();
   }

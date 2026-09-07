@@ -20,6 +20,8 @@ export class WlBuffer extends BaseObject {
   surface?: WlSurface;
   buffer: Buffer;
   parent: WlShmPool;
+  pendingRelease?: () => void;
+  released = false;
 
   constructor(initCtx: NewObjectDescriptor, args: WlBufferArgs) {
     super(initCtx);
@@ -34,10 +36,24 @@ export class WlBuffer extends BaseObject {
     this.buffer = Buffer.alloc(this.size);
   }
 
+  release() {
+    if (this.released) return;
+    this.released = true;
+    if (this.pendingRelease) {
+      const fn = this.pendingRelease;
+      this.pendingRelease = undefined;
+      fn();
+    } else {
+      this.addCommand('release', {});
+      this.connection.sendPending();
+    }
+  }
+
   wlDestroy() {
     this.parent.daughterBuffers.delete(this);
 
     super.wlDestroy();
+    this.parent.cleanupIfEligible();
   }
 
   get pixelSize() {
